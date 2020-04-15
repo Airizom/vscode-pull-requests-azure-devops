@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   viewBox="0 0 448 512"
+   version="1.1"
+   id="svg4"
+   sodipodi:docname="user-light.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata10">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="3072"
+     inkscape:window-height="1634"
+     id="namedview6"
+     showgrid="false"
+     inkscape:zoom="0.4609375"
+     inkscape:cx="-862.91524"
+     inkscape:cy="256"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4" />
+  <path
+     id="path842"
+     d="m 223.36437,258.1017 c 52.8672,0 95.7143,-45.66094 95.7143,-102 0,-56.339073 -42.8471,-102.000003 -95.7143,-102.000003 -52.8672,0 -95.7143,45.66093 -95.7143,102.000003 0,56.33906 42.8471,102 95.7143,102 z m 67,25.5 h -12.4877 c -16.6005,8.12812 -35.0703,12.75 -54.5123,12.75 -19.442,0 -37.8371,-4.62188 -54.5123,-12.75 h -12.4877 c -55.4844,0 -100.500004,47.97187 -100.500004,107.1 v 33.14999 c 0,21.11719 16.077,38.25 35.8929,38.25 H 354.97147 c 19.8159,0 35.8929,-17.13281 35.8929,-38.25 V 390.7017 c 0,-59.12813 -45.0156,-107.1 -100.5,-107.1 z"
+     inkscape:connector-curvature="0"
+     style="fill:#ffffff;fill-opacity:0.75862068;stroke-width:0.77193099" />
+</svg>
+<!--
+Font Awesome Free 5.5.0 by @fontawesome - https://fontawesome.com
+License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
+-->
+
