@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import {PullRequestsService} from './pull-request.service';
+import { PullRequestsService } from './pull-request.service';
 import {
     Comment,
     CommentPosition,
@@ -15,16 +15,16 @@ import {
 import * as fs from 'fs';
 import * as os from 'os';
 import * as lodash from 'lodash';
-import {FolderTreeItem} from './folder-tree-item';
-import {PullRequestsProvider} from './pull-request-provider';
-import {DiffCommentService} from './diff-comment.service';
-import {PullRequestVote} from './pull-request-vote.model';
-import {PullRequesetComment} from '../models/pull-request-comment.model';
-import {ResourceRef} from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
-import {WorkItem} from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
-import {OverallCommentTreeItem} from '../models/overall-comment-tree-item';
+import { FolderTreeItem } from './folder-tree-item';
+import { PullRequestsProvider } from './pull-request-provider';
+import { DiffCommentService } from './diff-comment.service';
+import { PullRequestVote } from './pull-request-vote.model';
+import { PullRequesetComment } from '../models/pull-request-comment.model';
+import { ResourceRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
+import { WorkItem } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
+import { OverallCommentTreeItem } from '../models/overall-comment-tree-item';
 import * as path from 'path';
-import {DiffTextDocumentContentProvider} from './diff-text-document-content-provider';
+import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
 
 export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -425,6 +425,42 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             return 'Rename, Edit';
         }
         return '';
+    }
+
+    /**
+     * Create a path to the left side file diff
+     *
+     * @private
+     * @param {(string | undefined)} lastPathFragment
+     * @returns {string}
+     * @memberof PullRequestReviewerTreeProvider
+     */
+    private static getLeftDiffFilePath(lastPathFragment: string | undefined): string {
+        return `${os.tmpdir()}${path.sep}version2${lastPathFragment}`;
+    }
+
+    /**
+     * Create a path to the right hand file diff
+     *
+     * @private
+     * @param {(string | undefined)} lastPathFragment
+     * @returns {string}
+     * @memberof PullRequestReviewerTreeProvider
+     */
+    private static getRightDiffFilePath(lastPathFragment: string | undefined): string {
+        return `${os.tmpdir()}${path.sep}version1${lastPathFragment}`;
+    }
+
+    /**
+     * Open commit in browser in azure devops
+     *
+     * @private
+     * @param {string} url
+     * @returns {(Thenable<{} | undefined>)}
+     * @memberof PullRequestReviewerTreeProvider
+     */
+    private static openLinkInBrowser(url: string): Thenable<{} | undefined> {
+        return vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 
     /**
@@ -1041,7 +1077,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.changesetVersionDiffEditor = vscode.window.activeTextEditor;
 
         if (this.changesetVersionDiffEditor) {
-            let lastPathFragment: string | undefined = this.changesetVersionDiffEditor.document.fileName.split('\\').pop();
+            let lastPathFragment: string | undefined = this.changesetVersionDiffEditor.document.fileName.split(path.sep).pop();
             if (lastPathFragment) {
                 // remove 'version1' from the path fragment
                 const version1Count: number = 8;
@@ -1182,30 +1218,6 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     }
 
     /**
-     * Create a path to the left side file diff
-     *
-     * @private
-     * @param {(string | undefined)} lastPathFragment
-     * @returns {string}
-     * @memberof PullRequestReviewerTreeProvider
-     */
-    private static getLeftDiffFilePath(lastPathFragment: string | undefined): string {
-        return `${os.tmpdir()}${path.sep}version2${lastPathFragment}`;
-    }
-
-    /**
-     * Create a path to the right hand file diff
-     *
-     * @private
-     * @param {(string | undefined)} lastPathFragment
-     * @returns {string}
-     * @memberof PullRequestReviewerTreeProvider
-     */
-    private static getRightDiffFilePath(lastPathFragment: string | undefined): string {
-        return `${os.tmpdir()}${path.sep}version1${lastPathFragment}`;
-    }
-
-    /**
      * Get all the tree items for a code review
      *
      * @private
@@ -1296,18 +1308,6 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 });
             }
         });
-    }
-
-    /**
-     * Open commit in browser in azure devops
-     *
-     * @private
-     * @param {string} url
-     * @returns {(Thenable<{} | undefined>)}
-     * @memberof PullRequestReviewerTreeProvider
-     */
-    private static openLinkInBrowser(url: string): Thenable<{} | undefined> {
-        return vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 
 }
