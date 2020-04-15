@@ -1,0 +1,248 @@
+{
+    "name": "vscode-pull-requests-azure-devops",
+    "displayName": "VSCode Pull Requests Azure Devops",
+    "description": "A VSCode Extension to do pull requests for Azure Devops.",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.29.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "*",
+        "onView:pullRequestsExplorer",
+        "onView:pullRequestReviewer"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "configuration": {
+            "title": "VSCode Pull Requests Azure Devops",
+            "properties": {
+                "vscode-pull-requests-azure-devops.collection": {
+                    "type": "string",
+                    "default": "",
+                    "description": "URL to the Team Collection"
+                },
+                "vscode-pull-requests-azure-devops.access-token": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Personal access token generated from Azure Devops Security"
+                },
+                "vscode-pull-requests-azure-devops.project": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Project to run Azure Devops api queries against"
+                }
+            }
+        },
+        "viewsContainers": {
+            "activitybar": [{
+                "id": "pullRequestReviewer",
+                "title": "Pull Request",
+                "icon": "src/assets/images/code-review.svg"
+            }]
+        },
+        "commands": [{
+                "command": "pullRequestReviewPanel.resolve",
+                "title": "Resolve"
+            },
+            {
+                "command": "pullRequestReviewPanel.reactivate",
+                "title": "Reactivate"
+            },
+            {
+                "command": "pullRequestReviewPanel.edit",
+                "title": "Edit",
+                "icon": {
+                    "dark": "resources/images/edit_inverse.svg",
+                    "light": "resources/images/edit.svg"
+                }
+            },
+            {
+                "command": "pullRequestReviewPanel.like",
+                "title": "Like",
+                "icon": {
+                    "dark": "resources/images/thumbs-up-regular_inverse.svg",
+                    "light": "resources/images/thumbs-up-regular.svg"
+                }
+            },
+            {
+                "command": "pullRequestReviewPanel.unlike",
+                "title": "Unlike",
+                "icon": {
+                    "dark": "resources/images/thumbs-up-solid_inverse.svg",
+                    "light": "resources/images/thumbs-up-solid.svg"
+                }
+            },
+            {
+                "command": "pullRequestReviewPanel.submitFirstThreadComment",
+                "title": "Comment",
+                "enablement": "!commentIsEmpty"
+            },
+            {
+                "command": "pullRequestReviewPanel.updateComment",
+                "title": "Update",
+                "enablement": "!commentIsEmpty"
+            },
+            {
+                "command": "pullRequestReviewPanel.createThread",
+                "title": "Add Comment"
+            },
+            {
+                "command": "pullRequestReviewPanel.deleteComment",
+                "title": "Delete",
+                "icon": {
+                    "dark": "resources/images/close_inverse.svg",
+                    "light": "resources/images/close.svg"
+                }
+            },
+            {
+                "command": "pullRequestReviewPanel.reply",
+                "title": "Reply",
+                "enablement": "!commentIsEmpty"
+            },
+            {
+                "command": "pullRequestsExplorer.refresh",
+                "title": "Refresh",
+                "icon": {
+                    "light": "resources/images/sync-dark.svg",
+                    "dark": "resources/images/sync-light.svg"
+                }
+            },
+            {
+                "command": "pullRequestReviewPanel.approve",
+                "title": "Approve",
+                "category": "setFeedback"
+            },
+            {
+                "command": "pullRequestReviewPanel.approveWithSuggestions",
+                "title": "Approve with suggestions",
+                "category": "setFeedback"
+            },
+            {
+                "command": "pullRequestReviewPanel.waitForAuthor",
+                "title": "Wait for author",
+                "category": "setFeedback"
+            },
+            {
+                "command": "pullRequestReviewPanel.reject",
+                "title": "Reject",
+                "category": "setFeedback"
+            }
+        ],
+        "views": {
+            "scm": [{
+                "id": "pullRequestsExplorer",
+                "name": "Pull Requests"
+            }],
+            "pullRequestReviewer": [{
+                "id": "pullRequestReviewPanel",
+                "name": "Review"
+            }]
+        },
+        "menus": {
+            "editor/context": [{
+                "command": "pullRequestReviewPanel.createThread",
+                "group": "navigation",
+                "when": "editorHasSelection && isPullRequest"
+            }],
+            "comments/commentThread/context": [{
+                    "command": "pullRequestReviewPanel.submitFirstThreadComment",
+                    "group": "inline",
+                    "when": "commentThreadIsEmpty"
+                },
+                {
+                    "command": "pullRequestReviewPanel.reply",
+                    "group": "inline",
+                    "when": "!commentThreadIsEmpty"
+                }
+            ],
+            "comments/comment/title": [{
+                    "command": "pullRequestReviewPanel.edit",
+                    "group": "inline@1",
+                    "when": "comment =~ /editable/"
+                },
+                {
+                    "command": "pullRequestReviewPanel.deleteComment",
+                    "group": "inline@2",
+                    "when": "comment =~ /editable/"
+                },
+                {
+                    "command": "pullRequestReviewPanel.like",
+                    "group": "inline@3",
+                    "when": "comment =~ /Like/"
+                },
+                {
+                    "command": "pullRequestReviewPanel.unlike",
+                    "group": "inline@3",
+                    "when": "comment =~ /Unlike/"
+                }
+            ],
+            "comments/comment/context": [{
+                "command": "pullRequestReviewPanel.updateComment",
+                "group": "inline",
+                "when": "!commentThreadIsEmpty"
+            }],
+            "comments/commentThread/title": [{
+                    "command": "pullRequestReviewPanel.resolve",
+                    "group": "navigation",
+                    "when": "!commentThreadIsEmpty && commentThread == 1"
+                },
+                {
+                    "command": "pullRequestReviewPanel.reactivate",
+                    "group": "navigation",
+                    "when": "!commentThreadIsEmpty && commentThread == 2"
+                }
+            ],
+            "explorer/context": [],
+            "view/item/context": [],
+            "view/title": [{
+                    "command": "pullRequestReviewPanel.approve",
+                    "when": "view == pullRequestReviewPanel",
+                    "group": "setFeedback"
+                },
+                {
+                    "command": "pullRequestReviewPanel.approveWithSuggestions",
+                    "when": "view == pullRequestReviewPanel",
+                    "group": "setFeedback"
+                },
+                {
+                    "command": "pullRequestReviewPanel.waitForAuthor",
+                    "when": "view == pullRequestReviewPanel",
+                    "group": "setFeedback"
+                },
+                {
+                    "command": "pullRequestReviewPanel.reject",
+                    "when": "view == pullRequestReviewPanel",
+                    "group": "setFeedback"
+                },
+                {
+                    "command": "pullRequestsExplorer.refresh",
+                    "when": "view == pullRequestsExplorer",
+                    "group": "navigation"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/lodash": "^4.14.149",
+        "@types/mocha": "^2.2.42",
+        "@types/node": "^11.15.3",
+        "@types/vscode": "^1.41.0",
+        "tslint": "^5.20.1",
+        "typescript": "^3.7.4",
+        "vscode-test": "^1.3.0"
+    },
+    "dependencies": {
+        "azure-devops-node-api": "^10.0.0",
+        "fs": "0.0.1-security",
+        "lodash": "^4.17.15",
+        "path": "^0.12.7"
+    }
+}
