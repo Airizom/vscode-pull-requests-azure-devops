@@ -37,13 +37,16 @@
             }
         },
         "viewsContainers": {
-            "activitybar": [{
-                "id": "pullRequestReviewer",
-                "title": "Pull Request",
-                "icon": "src/assets/images/code-review.svg"
-            }]
+            "activitybar": [
+                {
+                    "id": "pullRequestReviewer",
+                    "title": "Pull Request",
+                    "icon": "src/assets/images/code-review.svg"
+                }
+            ]
         },
-        "commands": [{
+        "commands": [
+            {
                 "command": "pullRequestReviewPanel.resolve",
                 "title": "Resolve"
             },
@@ -132,22 +135,29 @@
             }
         ],
         "views": {
-            "scm": [{
-                "id": "pullRequestsExplorer",
-                "name": "Pull Requests"
-            }],
-            "pullRequestReviewer": [{
-                "id": "pullRequestReviewPanel",
-                "name": "Review"
-            }]
+            "scm": [
+                {
+                    "id": "pullRequestsExplorer",
+                    "name": "Pull Requests"
+                }
+            ],
+            "pullRequestReviewer": [
+                {
+                    "id": "pullRequestReviewPanel",
+                    "name": "Review"
+                }
+            ]
         },
         "menus": {
-            "editor/context": [{
-                "command": "pullRequestReviewPanel.createThread",
-                "group": "navigation",
-                "when": "editorHasSelection && isPullRequest"
-            }],
-            "comments/commentThread/context": [{
+            "editor/context": [
+                {
+                    "command": "pullRequestReviewPanel.createThread",
+                    "group": "navigation",
+                    "when": "editorHasSelection && isPullRequest"
+                }
+            ],
+            "comments/commentThread/context": [
+                {
                     "command": "pullRequestReviewPanel.submitFirstThreadComment",
                     "group": "inline",
                     "when": "commentThreadIsEmpty"
@@ -158,7 +168,8 @@
                     "when": "!commentThreadIsEmpty"
                 }
             ],
-            "comments/comment/title": [{
+            "comments/comment/title": [
+                {
                     "command": "pullRequestReviewPanel.edit",
                     "group": "inline@1",
                     "when": "comment =~ /editable/"
@@ -179,12 +190,15 @@
                     "when": "comment =~ /Unlike/"
                 }
             ],
-            "comments/comment/context": [{
-                "command": "pullRequestReviewPanel.updateComment",
-                "group": "inline",
-                "when": "!commentThreadIsEmpty"
-            }],
-            "comments/commentThread/title": [{
+            "comments/comment/context": [
+                {
+                    "command": "pullRequestReviewPanel.updateComment",
+                    "group": "inline",
+                    "when": "!commentThreadIsEmpty"
+                }
+            ],
+            "comments/commentThread/title": [
+                {
                     "command": "pullRequestReviewPanel.resolve",
                     "group": "navigation",
                     "when": "!commentThreadIsEmpty && commentThread == 1"
@@ -197,7 +211,8 @@
             ],
             "explorer/context": [],
             "view/item/context": [],
-            "view/title": [{
+            "view/title": [
+                {
                     "command": "pullRequestReviewPanel.approve",
                     "when": "view == pullRequestReviewPanel",
                     "group": "setFeedback"
@@ -243,6 +258,7 @@
         "azure-devops-node-api": "^10.0.0",
         "fs": "0.0.1-security",
         "lodash": "^4.17.15",
+        "minimist": "^1.2.5",
         "path": "^0.12.7"
     }
 }
