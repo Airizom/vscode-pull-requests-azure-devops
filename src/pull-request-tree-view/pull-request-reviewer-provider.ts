@@ -402,6 +402,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         }
         this.diffCommentService.disposeEditorsAndThreads();
         await this.closeDiffEditors();
+        this.setContextMenuToHaveAddCommentItem(false);
     }
 
     /**
@@ -477,12 +478,10 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (editor) {
                 if ((this.changesetVersionDiffEditor && editor.document === this.changesetVersionDiffEditor.document) ||
                     (this.previousVersionDiffEditor && editor.document === this.previousVersionDiffEditor.document)) {
-                    vscode.commands.executeCommand('setContext', 'isPullRequest', true);
+                    this.setContextMenuToHaveAddCommentItem();
                 } else {
-                    vscode.commands.executeCommand('setContext', 'isPullRequest', false);
+                    this.setContextMenuToHaveAddCommentItem(false);
                 }
-            } else {
-                vscode.commands.executeCommand('setContext', 'isPullRequest', false);
             }
         });
     }
@@ -1112,7 +1111,6 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         ) {
             const path: string = file.item?.path ?? file.originalPath ?? '';
             this.diffCommentService.lastSelectedDiffFilePath = path;
-            vscode.commands.executeCommand('setContext', 'isPullRequest', true);
             const lastPathFragment: string | undefined = path.split('/').pop();
             const rightDiffFilePath: string = PullRequestReviewerTreeProvider.getRightDiffFilePath(lastPathFragment);
             const leftDiffFilePath: string = PullRequestReviewerTreeProvider.getLeftDiffFilePath(lastPathFragment);
@@ -1201,7 +1199,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         const leftUri: vscode.Uri = vscode.Uri.parse(`${DiffTextDocumentContentProvider.pullRequestDiffScheme}:${leftDiffFilePath}`);
         const rightUri: vscode.Uri = vscode.Uri.parse(`${DiffTextDocumentContentProvider.pullRequestDiffScheme}:${rightDiffFilePath}`);
         await this.closeDiffEditors();
-        this.executeDiffCommand(leftUri, rightUri, lastPathFragment);
+        await this.executeDiffCommand(leftUri, rightUri, lastPathFragment);
     }
 
     /**
@@ -1213,8 +1211,24 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * @param {(string | undefined)} lastPathFragment
      * @memberof PullRequestReviewerTreeProvider
      */
-    private executeDiffCommand(leftUri: vscode.Uri, rightUri: vscode.Uri, lastPathFragment: string | undefined): void {
-        vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, lastPathFragment).then(this.setDiffEditorsCallback);
+    private async executeDiffCommand(leftUri: vscode.Uri, rightUri: vscode.Uri, lastPathFragment: string | undefined): Promise<void> {
+        await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, lastPathFragment);
+        await this.setDiffEditorsCallback();
+        this.setContextMenuToHaveAddCommentItem();
+    }
+
+    /**
+     * Mark the context value for 'isPullRequest'
+     * If set to true then 'Add Comment' item will show up when the user right clicks
+     * inside a diff editor.
+     * The item is tracked inside package.json
+     *
+     * @private
+     * @param {boolean} [shouldShowAddCommentItem=true]
+     * @memberof PullRequestReviewerTreeProvider
+     */
+    private setContextMenuToHaveAddCommentItem(shouldShowAddCommentItem: boolean = true): void {
+        vscode.commands.executeCommand('setContext', 'isPullRequest', shouldShowAddCommentItem);
     }
 
     /**
