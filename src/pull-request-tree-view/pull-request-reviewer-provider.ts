@@ -15,7 +15,7 @@ import {
 import * as fs from 'fs';
 import * as os from 'os';
 import * as lodash from 'lodash';
-import { FolderTreeItem } from './folder-tree-item';
+import { FolderTreeItem } from '../models/folder-tree-item';
 import { PullRequestsProvider } from './pull-request-provider';
 import { DiffCommentService } from './diff-comment.service';
 import { PullRequestVote } from './pull-request-vote.model';
@@ -26,6 +26,7 @@ import { OverallCommentTreeItem } from '../models/overall-comment-tree-item';
 import * as path from 'path';
 import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
 import { FilePathUtility } from '../utilities/file-path.utility';
+import { FileTreeItem } from '../models/file-tree-item';
 
 export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -235,6 +236,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 }
             }
 
+            // Files changes
             for (const file of element.pullRequestChanges) {
                 if (file.item) {
                     const pathToUse: string = file.item.path ?? file.originalPath ?? '';
@@ -242,19 +244,19 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     const completePath: string | undefined = `${replacePath}${lastPathFragment}`;
 
                     if (lastPathFragment && pathToUse && pathToUse === completePath) {
-                        treeItems.push({
-                            collapsibleState: vscode.TreeItemCollapsibleState.None,
-                            label: lastPathFragment ?? '',
-                            iconPath: vscode.ThemeIcon.File,
-                            description: PullRequestReviewerTreeProvider.getFileDescription(file.changeType),
-                            command: {
-                                title: '',
-                                command: 'pullRequestsExplorer.openFileDiff',
-                                arguments: [
-                                    file
-                                ]
-                            }
-                        });
+                        const command: vscode.Command = {
+                            title: '',
+                            command: 'pullRequestsExplorer.openFileDiff',
+                            arguments: [
+                                file
+                            ]
+                        };
+                        const fileItem: FileTreeItem = new FileTreeItem(
+                            lastPathFragment ?? '',
+                            PullRequestReviewerTreeProvider.getFileDescription(file.changeType),
+                            command
+                        );
+                        treeItems.push(fileItem);
                     }
                 }
             }
