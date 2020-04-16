@@ -25,6 +25,7 @@ import { WorkItem } from 'azure-devops-node-api/interfaces/WorkItemTrackingInter
 import { OverallCommentTreeItem } from '../models/overall-comment-tree-item';
 import * as path from 'path';
 import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
+import { FilePathUtility } from '../utilities/file-path.utility';
 
 export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -202,7 +203,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 );
                 if (fileChanges) {
                     const files: string[] = lodash.cloneDeep(fileChanges).map(value => value.item?.path ?? '');
-                    const commonPath: string = this.getCommonPath(files);
+                    const commonPath: string = FilePathUtility.getCommonPath(files);
                     filesTreeItems.push(new FolderTreeItem(commonPath, fileChanges));
                 }
             }
@@ -225,7 +226,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
                 return '';
             });
-            const distinctStartingDirectories: string[] = this.getDirectoriesWithDistinctStartingPaths(paths);
+            const distinctStartingDirectories: string[] = FilePathUtility.getDirectoriesWithDistinctStartingPaths(paths);
 
             for (const filePath of distinctStartingDirectories) {
                 const fileName: string | undefined = filePath.split('/').filter(value => value).pop();
@@ -261,62 +262,6 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         }
 
         return [];
-    }
-
-    /**
-     * Given a list of file paths return a list of unique starting directories.
-     * This will just return the base unique directories.
-     *
-     * @returns {string[]}
-     * @param paths
-     * @memberof PullRequestReviewerTreeProvider
-     */
-    public getDirectoriesWithDistinctStartingPaths(paths: string[]): string[] {
-        const diretories: Set<string> = new Set<string>();
-
-        for (const path of paths) {
-            const splitPaths: string[] = path.split('/');
-            if (splitPaths.length > 1) {
-                diretories.add(splitPaths[0]);
-            }
-        }
-
-        return [...diretories];
-    }
-
-    /**
-     * Get the common directory path given a list of folders
-     *
-     * @param {string[]} paths
-     * @returns {string}
-     * @memberof PullRequestReviewerTreeProvider
-     */
-    public getCommonPath(paths: string[]): string {
-        let commonPath: string = '';
-
-        const folders: string[][] = [];
-
-        for (let index: number = 0; index < paths.length; index++) {
-            folders[index] = paths[index].split('/');
-        }
-
-        for (let index: number = 0; index < folders[0].length - 1; index++) {
-            const thisFolder: string = folders[0][index];
-            let allMatched: boolean = true;
-            for (let i: number = 0; i < folders.length && allMatched; i++) {
-                if (folders[i].length < index) {
-                    allMatched = false;
-                    break;
-                }
-                allMatched = folders[i][index] === thisFolder;
-            }
-            if (allMatched) {
-                commonPath += `${thisFolder}/`;
-            } else {
-                break;
-            }
-        }
-        return commonPath;
     }
 
     /**
@@ -426,30 +371,6 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             return 'Rename, Edit';
         }
         return '';
-    }
-
-    /**
-     * Create a path to the left side file diff
-     *
-     * @private
-     * @param {(string | undefined)} lastPathFragment
-     * @returns {string}
-     * @memberof PullRequestReviewerTreeProvider
-     */
-    private static getLeftDiffFilePath(lastPathFragment: string | undefined): string {
-        return `${os.tmpdir()}${path.sep}version2${lastPathFragment}`;
-    }
-
-    /**
-     * Create a path to the right hand file diff
-     *
-     * @private
-     * @param {(string | undefined)} lastPathFragment
-     * @returns {string}
-     * @memberof PullRequestReviewerTreeProvider
-     */
-    private static getRightDiffFilePath(lastPathFragment: string | undefined): string {
-        return `${os.tmpdir()}${path.sep}version1${lastPathFragment}`;
     }
 
     /**
@@ -684,7 +605,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     }
 
     private readonly onEdit = async (comment: PullRequesetComment): Promise<void> => {
-        await this.editComment(comment);
+        await this.enterCommentEditMode(comment);
     }
 
     private readonly onUpdateComment = async (comment: PullRequesetComment): Promise<void> => {
@@ -881,7 +802,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * @returns {Promise<void>}
      * @memberof PullRequestReviewerTreeProvider
      */
-    private async editComment(comment: PullRequesetComment): Promise<void> {
+    private async enterCommentEditMode(comment: PullRequesetComment): Promise<void> {
         const thread: vscode.CommentThread | undefined = comment.parent;
 
         if (!thread || !comment.parent) {
@@ -1112,8 +1033,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             const path: string = file.item?.path ?? file.originalPath ?? '';
             this.diffCommentService.lastSelectedDiffFilePath = path;
             const lastPathFragment: string | undefined = path.split('/').pop();
-            const rightDiffFilePath: string = PullRequestReviewerTreeProvider.getRightDiffFilePath(lastPathFragment);
-            const leftDiffFilePath: string = PullRequestReviewerTreeProvider.getLeftDiffFilePath(lastPathFragment);
+            const rightDiffFilePath: string = FilePathUtility.getRightDiffFilePath(lastPathFragment);
+            const leftDiffFilePath: string = FilePathUtility.getLeftDiffFilePath(lastPathFragment);
             if (file.changeType === VersionControlChangeType.Add) {
                 const changeItem: GitItem | undefined = await this.pullRequestsService.getFileContents(path, this.pullRequest.lastMergeSourceCommit.commitId);
                 await this.writeDiffFilesAndOpenDiffDocumentProvider(
