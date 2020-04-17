@@ -22,7 +22,7 @@ import { PullRequestVote } from './pull-request-vote.model';
 import { PullRequesetComment } from '../models/pull-request-comment.model';
 import { ResourceRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
 import { WorkItem } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
-import { OverallCommentTreeItem } from '../models/overall-comment-tree-item';
+import { CommentTreeItem } from '../models/comment-tree-item';
 import * as path from 'path';
 import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
 import { FilePathUtility } from '../utilities/file-path.utility';
@@ -165,21 +165,21 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         }
 
         if (element.label === 'Overall Comments') {
-            const commentsTreeItems: OverallCommentTreeItem[] = [];
+            const commentsTreeItems: CommentTreeItem[] = [];
             for (const thread of this.threads) {
                 if (!thread.threadContext && !thread.isDeleted && thread.id && thread.status) {
                     const firstComment: Comment | undefined = thread.comments?.find((value: Comment) => {
                         return !value.isDeleted;
                     });
                     if (firstComment) {
-                        commentsTreeItems.push(new OverallCommentTreeItem(firstComment, thread));
+                        commentsTreeItems.push(new CommentTreeItem(firstComment, thread));
                     }
                 }
             }
             return commentsTreeItems;
         }
 
-        if (element instanceof OverallCommentTreeItem) {
+        if (element instanceof CommentTreeItem) {
             const commentsTreeItems: vscode.TreeItem[] = [];
             if (element.thread.comments) {
                 for (let index: number = 0; index < element.thread.comments.length; index++) {
@@ -242,7 +242,18 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     const pathToUse: string = file.item.path ?? file.originalPath ?? '';
                     const lastPathFragment: string | undefined = pathToUse.split('/').pop();
                     const completePath: string | undefined = `${replacePath}${lastPathFragment}`;
-
+                    let isCollapsible: boolean = false;
+                    for (const thread of this.threads) {
+                        const isThreadAttachedToFile: boolean = thread.threadContext?.filePath === completePath;
+                        if (isThreadAttachedToFile && !thread.isDeleted && thread.id && thread.status && thread.status === CommentThreadStatus.Active && thread.comments) {
+                            isCollapsible = thread.comments.some((value: Comment) => {
+                                return !value.isDeleted;
+                            });
+                            if (isCollapsible) {
+                                break;
+                            }
+                        }
+                    }
                     if (lastPathFragment && pathToUse && pathToUse === completePath) {
                         const command: vscode.Command = {
                             title: '',
@@ -253,6 +264,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         };
                         const fileItem: FileTreeItem = new FileTreeItem(
                             lastPathFragment ?? '',
+                            completePath,
+                            isCollapsible,
                             PullRequestReviewerTreeProvider.getFileDescription(file.changeType),
                             command
                         );
@@ -261,6 +274,22 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 }
             }
             return treeItems;
+        }
+
+        if (element instanceof FileTreeItem) {
+            const commentsTreeItems: CommentTreeItem[] = [];
+            for (const thread of this.threads) {
+                const isThreadAttachedToFile: boolean = thread.threadContext?.filePath === element.path;
+                if (isThreadAttachedToFile && !thread.isDeleted && thread.id && thread.status && thread.status === CommentThreadStatus.Active) {
+                    const firstComment: Comment | undefined = thread.comments?.find((value: Comment) => {
+                        return !value.isDeleted;
+                    });
+                    if (firstComment) {
+                        commentsTreeItems.push(new CommentTreeItem(firstComment, thread));
+                    }
+                }
+            }
+            return commentsTreeItems;
         }
 
         return [];

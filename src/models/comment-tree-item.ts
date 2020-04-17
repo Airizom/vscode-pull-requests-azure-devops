@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Comment, CommentThread } from 'azure-devops-node-api/interfaces/GitInterfaces';
 
-export class OverallCommentTreeItem extends vscode.TreeItem {
+export class CommentTreeItem extends vscode.TreeItem {
     public get tooltip(): string {
         return `${this.comment.author?.displayName} - ${this.comment.content}`;
     }

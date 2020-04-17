@@ -5,8 +5,8 @@ export class FileTreeItem extends vscode.TreeItem {
         return vscode.ThemeIcon.File;
     }
 
-    constructor(label: string, description: string, command: vscode.Command) {
-        super(label, vscode.TreeItemCollapsibleState.None);
+    constructor(label: string, public path: string, isCollapsible: boolean, description: string, command?: vscode.Command) {
+        super(label, isCollapsible ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None);
         super.description = description;
         super.command = command;
     }
