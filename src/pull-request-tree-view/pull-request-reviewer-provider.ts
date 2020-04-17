@@ -245,7 +245,13 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     let isCollapsible: boolean = false;
                     for (const thread of this.threads) {
                         const isThreadAttachedToFile: boolean = thread.threadContext?.filePath === completePath;
-                        if (isThreadAttachedToFile && !thread.isDeleted && thread.id && thread.status && thread.status === CommentThreadStatus.Active && thread.comments) {
+                        if (isThreadAttachedToFile &&
+                            !thread.isDeleted &&
+                            thread.id &&
+                            thread.status &&
+                            thread.status === CommentThreadStatus.Active &&
+                            thread.comments
+                        ) {
                             isCollapsible = thread.comments.some((value: Comment) => {
                                 return !value.isDeleted;
                             });
