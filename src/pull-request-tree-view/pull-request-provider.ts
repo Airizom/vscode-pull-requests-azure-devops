@@ -5,6 +5,7 @@ import { PullRequestTreeItem } from './pull-request-tree-item';
 import { TreeItemCollapsibleState } from 'vscode';
 import { PullRequestReviewerTreeProvider } from './pull-request-reviewer-provider';
 import { PullRequestVote } from '../models/pull-request-vote.model';
+import { AvatarUtiliy as AvatarUtility } from '../utilities/avatar.utility';
 
 export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -12,11 +13,13 @@ export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
     public readonly onDidChangeTreeData: vscode.Event<any | undefined> = this._onDidChangeTreeData.event;
     public pullRequestReviewerTreeView: vscode.TreeView<vscode.TreeItem> | undefined;
 
+    private readonly avatarUtility: AvatarUtility;
 
     constructor(
         private readonly pullRequestsService: PullRequestsService
     ) {
         vscode.commands.registerCommand('pullRequestsExplorer.showPullRequest', this.showPullRequestReview);
+        this.avatarUtility = new AvatarUtility(this.pullRequestsService);
     }
 
     /**
@@ -150,7 +153,7 @@ export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
                 const treeItem: vscode.TreeItem = {
                     collapsibleState: TreeItemCollapsibleState.None,
                     label: reviewer.displayName,
-                    iconPath: undefined,
+                    iconPath: await this.avatarUtility.getProfilePic(reviewer.id),
                     description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote)
                 };
                 reviewerTreeItem.push(treeItem);
