@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { PullRequestsService } from './pull-request.service';
+import { PullRequestsService } from '../services/pull-request.service';
 import { GitPullRequest, GitPullRequestCommentThread, IdentityRefWithVote } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { PullRequestTreeItem } from './pull-request-tree-item';
 import { TreeItemCollapsibleState } from 'vscode';
 import { PullRequestReviewerTreeProvider } from './pull-request-reviewer-provider';
-import { PullRequestVote } from './pull-request-vote.model';
+import { PullRequestVote } from '../models/pull-request-vote.model';
 
 export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();

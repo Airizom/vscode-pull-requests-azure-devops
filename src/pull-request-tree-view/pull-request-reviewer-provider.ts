@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PullRequestsService } from './pull-request.service';
+import { PullRequestsService } from '../services/pull-request.service';
 import {
     Comment,
     CommentPosition,
@@ -17,8 +17,8 @@ import * as os from 'os';
 import * as lodash from 'lodash';
 import { FolderTreeItem } from '../models/folder-tree-item';
 import { PullRequestsProvider } from './pull-request-provider';
-import { DiffCommentService } from './diff-comment.service';
-import { PullRequestVote } from './pull-request-vote.model';
+import { DiffCommentService } from '../services/diff-comment.service';
+import { PullRequestVote } from '../models/pull-request-vote.model';
 import { PullRequesetComment } from '../models/pull-request-comment.model';
 import { ResourceRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
 import { WorkItem } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';

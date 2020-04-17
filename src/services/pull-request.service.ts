@@ -21,7 +21,7 @@ import {
 } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { spawnSync, SpawnSyncReturns } from 'child_process';
 import { TextDecoder } from 'util';
-import { PullRequestVote } from './pull-request-vote.model';
+import { PullRequestVote } from '../models/pull-request-vote.model';
 import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
 import {
     WorkItem,
@@ -29,6 +29,7 @@ import {
     WorkItemExpand
 } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
+import { Avatar } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
 
 export class PullRequestsService {
 
@@ -695,5 +696,6 @@ export class PullRequestsService {
             this.policyApi = await this.connection.getPolicyApi();
         }
     }
+
 
 }

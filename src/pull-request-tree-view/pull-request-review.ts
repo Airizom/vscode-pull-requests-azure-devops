@@ -1,5 +1,5 @@
 import { GitPullRequest } from '../../node_modules/azure-devops-node-api/interfaces/GitInterfaces';
-import { PullRequestsService } from './pull-request.service';
+import { PullRequestsService } from '../services/pull-request.service';
 
 export class PullRequestReview {
 

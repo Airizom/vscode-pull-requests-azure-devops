@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PullRequestsService } from './pull-request.service';
+import { PullRequestsService } from '../services/pull-request.service';
 import { PullRequestsProvider } from './pull-request-provider';
 
 export class PullRequestExplorer {
