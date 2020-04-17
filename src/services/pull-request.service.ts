@@ -29,7 +29,6 @@ import {
     WorkItemExpand
 } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
-import { Avatar } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
 
 export class PullRequestsService {
 
