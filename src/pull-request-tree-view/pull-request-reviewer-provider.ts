@@ -27,6 +27,8 @@ import * as path from 'path';
 import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
 import { FilePathUtility } from '../utilities/file-path.utility';
 import { FileTreeItem } from '../models/file-tree-item';
+import { ProfileService } from '../services/profile.service';
+import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
 
 export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -1200,9 +1202,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         const pullRequestTreeItems: vscode.TreeItem[] = [];
 
         // User
+        const userAvatar: Profile | undefined = await this.pullRequestsService.getProfile(this.pullRequest.createdBy?.id);
         const userNameTreeItem: vscode.TreeItem = {
             label: `${userName} - ${PullRequestStatus[status]}`,
-            collapsibleState: vscode.TreeItemCollapsibleState.None
+            collapsibleState: vscode.TreeItemCollapsibleState.None,
+            iconPath: vscode.Uri.parse(`data:image/*;base64,${userAvatar?.coreAttributes['Avatar'].value.value}`)
         };
         pullRequestTreeItems.push(userNameTreeItem);
 

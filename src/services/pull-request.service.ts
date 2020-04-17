@@ -29,6 +29,7 @@ import {
     WorkItemExpand
 } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
+import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
 
 export class PullRequestsService {
 
@@ -85,6 +86,37 @@ export class PullRequestsService {
         if (this.policyApi && this.project) {
             return this.policyApi.getPolicyEvaluations(this.project, artifactId, true);
         }
+    }
+
+    /**
+     * Get the profile for a user based on the id
+     *
+     * @param {string} [id='me']
+     * @returns
+     * @memberof PullRequestsService
+     */
+    public async getProfile(id: string = 'me'): Promise<Profile | undefined> {
+        if (this.connection && this.collection) {
+            let profileApiBaseUrl: string = this.collection;
+            const indexOfDomain: number = profileApiBaseUrl.indexOf('//');
+            let nextDotOrColonIndex: number = profileApiBaseUrl.indexOf('.');
+            if (nextDotOrColonIndex === -1) {
+                nextDotOrColonIndex = profileApiBaseUrl.indexOf(':');
+            }
+            if (nextDotOrColonIndex !== -1) {
+                const domain: string = profileApiBaseUrl.substring(indexOfDomain + 2, nextDotOrColonIndex);
+                profileApiBaseUrl
+                    = `${profileApiBaseUrl.substr(0, indexOfDomain + 2)}${domain}.vssps${profileApiBaseUrl.substr(domain.length + indexOfDomain + 2)}`;
+            }
+            const response: IHttpClientResponse = await this.connection.rest.client.get(`${profileApiBaseUrl}_apis/profile/profiles/${id}?api-version=5.1&details=true&coreAttributes=Email,Avatar`, { 'Content-Type': 'application/json' });
+            const statusCodeOk: number = 200;
+            if (response.message && response.message.statusCode === statusCodeOk) {
+                const body: string = await response.readBody();
+                return JSON.parse(body);
+            }
+        }
+
+        return undefined;
     }
 
     /**

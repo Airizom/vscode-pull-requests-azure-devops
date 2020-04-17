@@ -5,6 +5,7 @@ import { PullRequestTreeItem } from './pull-request-tree-item';
 import { TreeItemCollapsibleState } from 'vscode';
 import { PullRequestReviewerTreeProvider } from './pull-request-reviewer-provider';
 import { PullRequestVote } from '../models/pull-request-vote.model';
+import { ProfileService } from '../services/profile.service';
 
 export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -162,7 +163,8 @@ export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
     private readonly showPullRequestReview = async (pullRequest: GitPullRequest) => {
         if (pullRequest && pullRequest.pullRequestId) {
             const threads: GitPullRequestCommentThread[] = await this.pullRequestsService.getPullRequestThreads(pullRequest.pullRequestId);
-            const treeDataProvider: PullRequestReviewerTreeProvider = new PullRequestReviewerTreeProvider(pullRequest, threads, this.pullRequestsService);
+            const treeDataProvider: PullRequestReviewerTreeProvider =
+                new PullRequestReviewerTreeProvider(pullRequest, threads, this.pullRequestsService);
             this.pullRequestReviewerTreeView = vscode.window.createTreeView('pullRequestReviewPanel', { treeDataProvider });
             this.pullRequestReviewerTreeView.onDidChangeVisibility(async (event: vscode.TreeViewVisibilityChangeEvent) => {
                 if (event.visible) {
