@@ -97,17 +97,7 @@ export class PullRequestsService {
      */
     public async getProfile(id: string = 'me'): Promise<Profile | undefined> {
         if (this.connection && this.collection) {
-            let profileApiBaseUrl: string = this.collection;
-            const indexOfDomain: number = profileApiBaseUrl.indexOf('//');
-            let nextDotOrColonIndex: number = profileApiBaseUrl.indexOf('.');
-            if (nextDotOrColonIndex === -1) {
-                nextDotOrColonIndex = profileApiBaseUrl.indexOf(':');
-            }
-            if (nextDotOrColonIndex !== -1) {
-                const domain: string = profileApiBaseUrl.substring(indexOfDomain + 2, nextDotOrColonIndex);
-                profileApiBaseUrl
-                    = `${profileApiBaseUrl.substr(0, indexOfDomain + 2)}${domain}.vssps${profileApiBaseUrl.substr(domain.length + indexOfDomain + 2)}`;
-            }
+            const profileApiBaseUrl: string = this.getProfileApiUrl();
             const response: IHttpClientResponse = await this.connection.rest.client.get(`${profileApiBaseUrl}_apis/profile/profiles/${id}?api-version=5.1&details=true&coreAttributes=Email,Avatar`, { 'Content-Type': 'application/json' });
             const statusCodeOk: number = 200;
             if (response.message && response.message.statusCode === statusCodeOk) {
@@ -697,6 +687,31 @@ export class PullRequestsService {
             return `${this.connection.serverUrl}/${this.project}/_git/${this.currentRepoName}/commit/${commitHash}`;
         }
         return '';
+    }
+
+    /**
+     * Get the url to make profile api requests to.
+     * This is different from the default collection url.
+     * Since the profile api resource is hosted on a diffeent subdomain we
+     * must append '.vssps' to the end of the first subdomain on the collection url.
+     *
+     * @private
+     * @returns {string}
+     * @memberof PullRequestsService
+     */
+    private getProfileApiUrl(): string {
+        let profileApiBaseUrl: string = this.collection as string;
+        const indexOfDomain: number = profileApiBaseUrl.indexOf('//');
+        let nextDotOrColonIndex: number = profileApiBaseUrl.indexOf('.');
+        if (nextDotOrColonIndex === -1) {
+            nextDotOrColonIndex = profileApiBaseUrl.indexOf(':');
+        }
+        if (nextDotOrColonIndex !== -1) {
+            const domain: string = profileApiBaseUrl.substring(indexOfDomain + 2, nextDotOrColonIndex);
+            profileApiBaseUrl
+                = `${profileApiBaseUrl.substr(0, indexOfDomain + 2)}${domain}.vssps${profileApiBaseUrl.substr(domain.length + indexOfDomain + 2)}`;
+        }
+        return profileApiBaseUrl;
     }
 
     /**
