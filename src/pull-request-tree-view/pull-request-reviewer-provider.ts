@@ -141,7 +141,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     reviewers.push({
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
                         label: reviewer.displayName,
-                        description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote)
+                        description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote),
+                        iconPath: await this.avatarUtility.getProfilePic(reviewer.id)
                     });
                 }
             }
