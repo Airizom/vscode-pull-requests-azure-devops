@@ -5,7 +5,7 @@ import { PullRequestTreeItem } from './pull-request-tree-item';
 import { TreeItemCollapsibleState } from 'vscode';
 import { PullRequestReviewerTreeProvider } from './pull-request-reviewer-provider';
 import { PullRequestVote } from '../models/pull-request-vote.model';
-import { AvatarUtiliy as AvatarUtility } from '../utilities/avatar.utility';
+import { AvatarUtility } from '../utilities/avatar.utility';
 
 export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();

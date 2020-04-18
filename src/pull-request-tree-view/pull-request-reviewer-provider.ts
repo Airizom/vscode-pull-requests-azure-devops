@@ -27,7 +27,7 @@ import * as path from 'path';
 import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
 import { FilePathUtility } from '../utilities/file-path.utility';
 import { FileTreeItem } from '../models/file-tree-item';
-import { AvatarUtiliy } from '../utilities/avatar.utility';
+import { AvatarUtility } from '../utilities/avatar.utility';
 
 export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -56,7 +56,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private unlikeCommentCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
-    private readonly avatarUtility: AvatarUtiliy;
+    private readonly avatarUtility: AvatarUtility;
 
     constructor(
         private pullRequest: GitPullRequest,
@@ -66,7 +66,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.diffCommentService = new DiffCommentService(threads, pullRequestsService.user);
         this.setCommands();
         this.setOnDidChangeActiveEditorCallback();
-        this.avatarUtility = new AvatarUtiliy(this.pullRequestsService);
+        this.avatarUtility = new AvatarUtility(this.pullRequestsService);
     }
 
     /**

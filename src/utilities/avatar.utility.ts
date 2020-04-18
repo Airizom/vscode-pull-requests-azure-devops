@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
 import * as path from 'path';
 
-export class AvatarUtiliy {
+export class AvatarUtility {
 
     private readonly cachedAvatars: Map<string, string> = new Map();
 
