@@ -175,7 +175,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         return !value.isDeleted;
                     });
                     if (firstComment) {
-                        commentsTreeItems.push(new CommentTreeItem(firstComment, thread));
+                        commentsTreeItems.push(new CommentTreeItem(firstComment, thread, await this.avatarUtility.getProfilePic(firstComment.author?.id)));
                     }
                 }
             }
@@ -187,11 +187,13 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (element.thread.comments) {
                 for (let index: number = 0; index < element.thread.comments.length; index++) {
                     if (index !== 0) {
+                        const comment: Comment = element.thread.comments[index];
                         commentsTreeItems.push({
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
-                            label: element.thread.comments[index].content,
-                            description: `${element.thread.comments[index].author?.displayName}`,
-                            tooltip: `${element.thread.comments[index].author?.displayName} - ${element.thread.comments[index].content}`
+                            label: comment.content,
+                            description: `${comment.author?.displayName}`,
+                            tooltip: `${comment.author?.displayName} - ${comment.content}`,
+                            iconPath: await this.avatarUtility.getProfilePic(comment.author?.id)
                         });
                     }
                 }
@@ -289,12 +291,12 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             const commentsTreeItems: CommentTreeItem[] = [];
             for (const thread of this.threads) {
                 const isThreadAttachedToFile: boolean = thread.threadContext?.filePath === element.path;
-                if (isThreadAttachedToFile && !thread.isDeleted && thread.id && thread.status && thread.status === CommentThreadStatus.Active) {
+                if (isThreadAttachedToFile && !thread.isDeleted && thread.id && thread.status) {
                     const firstComment: Comment | undefined = thread.comments?.find((value: Comment) => {
                         return !value.isDeleted;
                     });
                     if (firstComment) {
-                        commentsTreeItems.push(new CommentTreeItem(firstComment, thread));
+                        commentsTreeItems.push(new CommentTreeItem(firstComment, thread, await this.avatarUtility.getProfilePic(firstComment.author?.id)));
                     }
                 }
             }

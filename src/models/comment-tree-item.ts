@@ -8,9 +8,14 @@ export class CommentTreeItem extends vscode.TreeItem {
 
     constructor(
         public comment: Comment,
-        public thread: CommentThread
+        public thread: CommentThread,
+        public iconPath: vscode.Uri | {
+            light: string | vscode.Uri;
+            dark: string | vscode.Uri;
+        }
     ) {
         super(`${comment.content}`, vscode.TreeItemCollapsibleState.Collapsed);
         this.description = comment.author?.displayName;
+        this.iconPath = iconPath;
     }
 }
