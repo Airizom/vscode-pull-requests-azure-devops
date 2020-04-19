@@ -84,5 +84,24 @@ export class FilePathUtility {
         return `${os.tmpdir()}${path.sep}version1${lastPathFragment}`;
     }
 
+    /**
+     * Get the last path fragment of a url or file path
+     *
+     * @static
+     * @param {string} path
+     * @returns {string}
+     * @memberof FilePathUtility
+     */
+    public static getLastPathFragment(path: string): string {
+        if (path) {
+            const lastIndexOfSlash: number = path.lastIndexOf('/');
+            if (lastIndexOfSlash !== -1) {
+                return path.substring(lastIndexOfSlash + 1);
+            }
+        }
+
+        return '';
+    }
+
 
 }

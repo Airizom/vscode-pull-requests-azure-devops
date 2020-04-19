@@ -1218,6 +1218,13 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         };
         pullRequestTreeItems.push(userNameTreeItem);
 
+        // Branches
+        const branchesTreeItem: vscode.TreeItem = {
+            collapsibleState: vscode.TreeItemCollapsibleState.None,
+            label: `${FilePathUtility.getLastPathFragment(this.pullRequest.sourceRefName ?? '')} into ${FilePathUtility.getLastPathFragment(this.pullRequest.targetRefName ?? '')}`
+        };
+        pullRequestTreeItems.push(branchesTreeItem);
+
         // Title
         const titleTreeItem: vscode.TreeItem = {
             collapsibleState: vscode.TreeItemCollapsibleState.None,
