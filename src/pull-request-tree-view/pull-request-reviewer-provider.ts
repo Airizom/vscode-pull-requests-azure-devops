@@ -1222,7 +1222,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         const branchesTreeItem: vscode.TreeItem = {
             collapsibleState: vscode.TreeItemCollapsibleState.None,
             label: `${FilePathUtility.getLastPathFragment(this.pullRequest.sourceRefName ?? '')} into ${FilePathUtility.getLastPathFragment(this.pullRequest.targetRefName ?? '')}`,
-            description: `${this.pullRequest.sourceRefName} into ${this.pullRequest.targetRefName}`,
+            tooltip: `${this.pullRequest.sourceRefName} into ${this.pullRequest.targetRefName}`,
+            iconPath: new vscode.ThemeIcon('git-branch')
         };
         pullRequestTreeItems.push(branchesTreeItem);
 
