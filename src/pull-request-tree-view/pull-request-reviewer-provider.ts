@@ -1221,7 +1221,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         // Branches
         const branchesTreeItem: vscode.TreeItem = {
             collapsibleState: vscode.TreeItemCollapsibleState.None,
-            label: `${FilePathUtility.getLastPathFragment(this.pullRequest.sourceRefName ?? '')} into ${FilePathUtility.getLastPathFragment(this.pullRequest.targetRefName ?? '')}`
+            label: `${FilePathUtility.getLastPathFragment(this.pullRequest.sourceRefName ?? '')} into ${FilePathUtility.getLastPathFragment(this.pullRequest.targetRefName ?? '')}`,
+            description: `${this.pullRequest.sourceRefName} into ${this.pullRequest.targetRefName}`,
         };
         pullRequestTreeItems.push(branchesTreeItem);
 
