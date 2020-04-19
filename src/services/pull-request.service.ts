@@ -26,7 +26,8 @@ import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi'
 import {
     WorkItem,
     WorkItemErrorPolicy,
-    WorkItemExpand
+    WorkItemExpand,
+    WorkItemType
 } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
@@ -208,9 +209,31 @@ export class PullRequestsService {
      */
     public async getWorkItems(ids: number[]): Promise<WorkItem[]> {
         if (this.workItemTrackingApi) {
-            return this.workItemTrackingApi.getWorkItems(ids, ['System.Title'], new Date(), WorkItemExpand.Links, WorkItemErrorPolicy.Omit, this.project);
+            return this.workItemTrackingApi.getWorkItems(
+                ids,
+                ['System.Title', 'System.WorkItemType'],
+                new Date(),
+                WorkItemExpand.Links,
+                WorkItemErrorPolicy.Omit,
+                this.project
+            );
         }
         return [];
+    }
+
+    /**
+     * Get a work item icon based on the type of work item
+     *
+     * @param {string} type
+     * @returns {(Promise<WorkItemType | undefined>)}
+     * @memberof PullRequestsService
+     */
+    public async getWorkItemIcon(type: string): Promise<WorkItemType | undefined> {
+        if (this.workItemTrackingApi && this.project) {
+            return this.workItemTrackingApi.getWorkItemType(this.project, type);
+        }
+
+        return undefined;
     }
 
 

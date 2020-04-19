@@ -21,7 +21,7 @@ import { DiffCommentService } from '../services/diff-comment.service';
 import { PullRequestVote } from '../models/pull-request-vote.model';
 import { PullRequesetComment } from '../models/pull-request-comment.model';
 import { ResourceRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
-import { WorkItem } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
+import { WorkItem, WorkItemType } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { CommentTreeItem } from '../models/comment-tree-item';
 import * as path from 'path';
 import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
@@ -110,17 +110,22 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 const workItemRefs: ResourceRef[] = this.pullRequest.workItemRefs.filter(value => value.id);
                 const workItemIds: number[] = workItemRefs.map(value => parseInt(value.id as string, 10));
                 const workItems: WorkItem[] = await this.pullRequestsService.getWorkItems(workItemIds);
-                const workItemTreeItems: vscode.TreeItem[] | undefined = workItems?.map(value => {
-                    return {
-                        label: value.fields ? value.fields['System.Title'] : '',
-                        collapsibleState: vscode.TreeItemCollapsibleState.None,
-                        command: {
-                            title: '',
-                            command: 'pullRequestsExplorer.openLink',
-                            arguments: [value._links?.html?.href ?? '']
-                        }
-                    };
-                });
+                const workItemTreeItems: vscode.TreeItem[] = [];
+                for (const workItem of workItems) {
+                    if (workItem.fields && workItem.url) {
+                        const type: WorkItemType | undefined = await this.pullRequestsService.getWorkItemIcon(workItem.fields['System.WorkItemType']);
+                        workItemTreeItems.push({
+                            label: workItem.fields['System.Title'],
+                            collapsibleState: vscode.TreeItemCollapsibleState.None,
+                            command: {
+                                title: '',
+                                command: 'pullRequestsExplorer.openLink',
+                                arguments: [workItem._links?.html?.href ?? '']
+                            },
+                            iconPath: type?.icon?.url ? vscode.Uri.parse(type?.icon.url) : undefined
+                        });
+                    }
+                }
                 return workItemTreeItems || [];
             }
             return [];
