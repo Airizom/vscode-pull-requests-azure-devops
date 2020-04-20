@@ -17,7 +17,8 @@ import {
     GitRepository,
     GitVersionOptions,
     GitVersionType,
-    PullRequestStatus
+    PullRequestStatus,
+    GitPullRequestStatus
 } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { spawnSync, SpawnSyncReturns } from 'child_process';
 import { TextDecoder } from 'util';
@@ -31,6 +32,7 @@ import {
 } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
+import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
 
 export class PullRequestsService {
 
@@ -234,6 +236,38 @@ export class PullRequestsService {
         }
 
         return undefined;
+    }
+
+    /**
+     * Get the status of a pull request
+     *
+     * @param {number} pullRequestId
+     * @returns {(Promise<GitPullRequestStatus | undefined>)}
+     * @memberof PullRequestsService
+     */
+    public async getPullRequestStatus(pullRequestId: number, statusId: number): Promise<GitPullRequestStatus | undefined> {
+        if (this.gitApi && this.repository && this.repository.id) {
+            return this.gitApi.getPullRequestStatus(this.repository.id, pullRequestId, statusId, this.project);
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Get the statuses of a pull request
+     *
+     * @param {number} pullRequestId
+     * @returns {(Promise<GitPullRequestStatus[] | undefined>)}
+     * @memberof PullRequestsService
+     */
+    public async getPullRequestStatuses(pullRequestId: number): Promise<GitPullRequestStatus[]> {
+        if (this.gitApi && this.repository && this.repository.id) {
+            const pullRequestIterations: GitPullRequestIteration[] | undefined =
+                await this.gitApi.getPullRequestIterations(this.currentRepoName, pullRequestId, this.project, true);
+            return this.gitApi.getPullRequestIterationStatuses(this.repository.id, pullRequestId, pullRequestIterations.length, this.project);
+        }
+
+        return [];
     }
 
 
@@ -710,6 +744,22 @@ export class PullRequestsService {
             return `${this.connection.serverUrl}/${this.project}/_git/${this.currentRepoName}/commit/${commitHash}`;
         }
         return '';
+    }
+
+    /**
+     * Get policy evaluations for a pull request
+     *
+     * @param {string} pullRequestId
+     * @returns {Promise<PolicyEvaluationRecord[]>}
+     * @memberof PullRequestsService
+     */
+    public async getPolicyEvaluations(pullRequestId: number): Promise<PolicyEvaluationRecord[]> {
+        if (this.policyApi && this.repository?.project?.id) {
+            const artifactId: string = `vstfs:///CodeReview/CodeReviewId/${this.repository.project?.id}/${pullRequestId}`;
+            return this.policyApi.getPolicyEvaluations(this.repository.project.id, artifactId);
+        }
+
+        return [];
     }
 
     /**

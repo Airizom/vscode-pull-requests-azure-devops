@@ -28,6 +28,8 @@ import { DiffTextDocumentContentProvider } from './diff-text-document-content-pr
 import { FilePathUtility } from '../utilities/file-path.utility';
 import { FileTreeItem } from '../models/file-tree-item';
 import { AvatarUtility } from '../utilities/avatar.utility';
+import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
+import { IconUtility } from '../utilities/icon.utility';
 
 export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -131,10 +133,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             return [];
         }
 
-        if (element.label === 'Required Policies') {
+        if (element.label === 'Policies') {
             const policyTreeItems: vscode.TreeItem[] = [];
-            if (this.pullRequest.artifactId) {
-                // const policies: PolicyEvaluationRecord | undefined = await this.pullRequestsService.getPolicies(this.pullRequest.artifactId);
+            if (this.pullRequest.pullRequestId) {
+                const records: PolicyEvaluationRecord[] = await this.pullRequestsService.getPolicyEvaluations(this.pullRequest.pullRequestId);
+                for (const record of records) {
+                    policyTreeItems.push({
+                        label: record.configuration?.type?.displayName,
+                        iconPath: IconUtility.getPolicyStatusIcon(record.status),
+                        description: record.configuration?.isBlocking ? 'Required' : 'Optional'
+                    });
+                }
             }
             return policyTreeItems;
         }
@@ -1251,7 +1260,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         pullRequestTreeItems.push(workItemsTreeItem);
 
         const policiesTreeItem: vscode.TreeItem = {
-            label: 'Required Policies',
+            label: 'Policies',
             collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
         };
         pullRequestTreeItems.push(policiesTreeItem);
