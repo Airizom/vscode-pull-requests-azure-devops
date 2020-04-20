@@ -1,7 +1,6 @@
 import { PullRequestsService } from '../services/pull-request.service';
 import * as vscode from 'vscode';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
-import * as path from 'path';
 
 export class AvatarUtility {
 
@@ -16,17 +15,11 @@ export class AvatarUtility {
      * This will first check the cached values to see if the avatar is already
      * stored in there. If it is then it will use that value and not make a network call.
      *
-     * @param {string} id
-     * @returns {(Promise<vscode.Uri | {
-     *         light: string | vscode.Uri;
-     *         dark: string | vscode.Uri;
-     *     }>)}
-     * @memberof AvatarUtiliy
+     * @param {string} [id]
+     * @returns {(Promise<vscode.Uri | vscode.ThemeIcon>)}
+     * @memberof AvatarUtility
      */
-    public async getProfilePic(id?: string): Promise<vscode.Uri | {
-        light: string | vscode.Uri;
-        dark: string | vscode.Uri;
-    }> {
+    public async getProfilePic(id?: string): Promise<vscode.Uri | vscode.ThemeIcon> {
         if (id) {
             if (this.cachedAvatars.has(id)) {
                 const avatarValue: string | undefined = this.cachedAvatars.get(id);
@@ -39,9 +32,6 @@ export class AvatarUtility {
                 return vscode.Uri.parse(`data:image/*;base64,${avatarValue}`);
             }
         }
-        return {
-            dark: vscode.Uri.file(`${path.resolve(__dirname, '..', '..')}/src/assets/images/user-light.svg`),
-            light: vscode.Uri.file(`${path.resolve(__dirname, '..', '..')}/src/assets/images/user-dark.svg`)
-        };
+        return new vscode.ThemeIcon('account');
     }
 }

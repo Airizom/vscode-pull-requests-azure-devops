@@ -9,10 +9,7 @@ export class CommentTreeItem extends vscode.TreeItem {
     constructor(
         public comment: Comment,
         public thread: CommentThread,
-        public iconPath: vscode.Uri | {
-            light: string | vscode.Uri;
-            dark: string | vscode.Uri;
-        }
+        public iconPath: vscode.Uri | vscode.ThemeIcon
     ) {
         super(`${comment.content}`, vscode.TreeItemCollapsibleState.Collapsed);
         this.description = comment.author?.displayName;
