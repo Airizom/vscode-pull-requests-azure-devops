@@ -1240,8 +1240,9 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         // Title
         const titleTreeItem: vscode.TreeItem = {
             collapsibleState: vscode.TreeItemCollapsibleState.None,
-            label: this.pullRequest.title,
-            tooltip: this.pullRequest.title
+            label: `${this.pullRequest.pullRequestId} - ${this.pullRequest.title}`,
+            tooltip: this.pullRequest.title,
+            iconPath: new vscode.ThemeIcon('git-pull-request')
         };
         pullRequestTreeItems.push(titleTreeItem);
 
