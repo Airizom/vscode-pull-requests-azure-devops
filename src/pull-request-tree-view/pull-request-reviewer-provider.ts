@@ -312,7 +312,14 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         return !value.isDeleted;
                     });
                     if (firstComment) {
-                        commentsTreeItems.push(new CommentTreeItem(firstComment, thread, await this.avatarUtility.getProfilePic(firstComment.author?.id)));
+                        commentsTreeItems.push(
+                            new CommentTreeItem(
+                                firstComment,
+                                thread,
+                                await this.avatarUtility.getProfilePic(firstComment.author?.id),
+                                thread.comments && thread.comments?.length > 1
+                            )
+                        );
                     }
                 }
             }

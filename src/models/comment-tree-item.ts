@@ -9,9 +9,10 @@ export class CommentTreeItem extends vscode.TreeItem {
     constructor(
         public comment: Comment,
         public thread: CommentThread,
-        public iconPath: vscode.Uri | vscode.ThemeIcon
+        public iconPath: vscode.Uri | vscode.ThemeIcon,
+        public isExandable: boolean = false
     ) {
-        super(`${comment.content}`, vscode.TreeItemCollapsibleState.Collapsed);
+        super(`${comment.content}`, isExandable ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
         this.description = comment.author?.displayName;
         this.iconPath = iconPath;
     }
