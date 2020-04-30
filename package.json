@@ -1,7 +1,13 @@
 {
     "name": "vscode-pull-requests-azure-devops",
-    "displayName": "VSCode Pull Requests Azure Devops",
+    "displayName": "Pull Requests for Azure Devops",
     "description": "A VSCode Extension to do pull requests for Azure Devops.",
+    "publisher": "michaelisom",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Airizom/vscode-pull-requests-azure-devops.git"
+    },
+    "icon": "pull-request-icon.png",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.29.0"
