@@ -30,6 +30,7 @@ import { FileTreeItem } from '../models/file-tree-item';
 import { AvatarUtility } from '../utilities/avatar.utility';
 import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
 import { IconUtility } from '../utilities/icon.utility';
+import { TreeItemUtility } from '../utilities/tree-item.utility';
 
 export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -59,6 +60,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
+    private readonly treeItemUtility: TreeItemUtility;
 
     constructor(
         private pullRequest: GitPullRequest,
@@ -69,6 +71,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.setCommands();
         this.setOnDidChangeActiveEditorCallback();
         this.avatarUtility = new AvatarUtility(this.pullRequestsService);
+        this.treeItemUtility = new TreeItemUtility(this.avatarUtility);
     }
 
     /**
@@ -156,7 +159,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
                         label: reviewer.displayName,
                         description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote),
-                        iconPath: await this.avatarUtility.getProfilePic(reviewer.id)
+                        iconPath: await this.avatarUtility.getProfilePicFromId(reviewer.id)
                     });
                 }
             }
@@ -191,7 +194,9 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         return !value.isDeleted;
                     });
                     if (firstComment) {
-                        commentsTreeItems.push(new CommentTreeItem(firstComment, thread, await this.avatarUtility.getProfilePic(firstComment.author?.id)));
+                        commentsTreeItems.push(
+                            new CommentTreeItem(firstComment, thread, await this.avatarUtility.getProfilePicFromId(firstComment.author?.id))
+                        );
                     }
                 }
             }
@@ -209,7 +214,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                             label: comment.content,
                             description: `${comment.author?.displayName}`,
                             tooltip: `${comment.author?.displayName} - ${comment.content}`,
-                            iconPath: await this.avatarUtility.getProfilePic(comment.author?.id)
+                            iconPath: await this.avatarUtility.getProfilePicFromId(comment.author?.id)
                         });
                     }
                 }
@@ -316,7 +321,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                             new CommentTreeItem(
                                 firstComment,
                                 thread,
-                                await this.avatarUtility.getProfilePic(firstComment.author?.id),
+                                await this.avatarUtility.getProfilePicFromId(firstComment.author?.id),
                                 thread.comments && thread.comments?.length > 1
                             )
                         );
@@ -1227,79 +1232,42 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private async createPullRequestReviewTree(userName: string = '', status: PullRequestStatus): Promise<vscode.TreeItem[]> {
         const pullRequestTreeItems: vscode.TreeItem[] = [];
 
+        const label: string = `${userName} - ${PullRequestStatus[status]}`;
+        const userId: string = this.pullRequest.createdBy?.id as string;
+
         // User
-        const userNameTreeItem: vscode.TreeItem = {
-            label: `${userName} - ${PullRequestStatus[status]}`,
-            collapsibleState: vscode.TreeItemCollapsibleState.None,
-            iconPath: await this.avatarUtility.getProfilePic(this.pullRequest.createdBy?.id)
-        };
-        pullRequestTreeItems.push(userNameTreeItem);
+        pullRequestTreeItems.push(await this.treeItemUtility.getCreatedByStatusTreeItem(label, userId));
+
+        const sourceRefName: string = this.pullRequest.sourceRefName ?? '';
+        const targetRefName: string = this.pullRequest.targetRefName ?? '';
 
         // Branches
-        const branchesTreeItem: vscode.TreeItem = {
-            collapsibleState: vscode.TreeItemCollapsibleState.None,
-            label: `${FilePathUtility.getLastPathFragment(this.pullRequest.sourceRefName ?? '')} into ${FilePathUtility.getLastPathFragment(this.pullRequest.targetRefName ?? '')}`,
-            tooltip: `${this.pullRequest.sourceRefName} into ${this.pullRequest.targetRefName}`,
-            iconPath: new vscode.ThemeIcon('git-branch')
-        };
-        pullRequestTreeItems.push(branchesTreeItem);
+        pullRequestTreeItems.push(this.treeItemUtility.getBranchesToMergeTreeItem(sourceRefName, targetRefName));
 
+        const pullRequestTitle: string = `${this.pullRequest.pullRequestId} - ${this.pullRequest.title}`;
         // Title
-        const titleTreeItem: vscode.TreeItem = {
-            collapsibleState: vscode.TreeItemCollapsibleState.None,
-            label: `${this.pullRequest.pullRequestId} - ${this.pullRequest.title}`,
-            tooltip: this.pullRequest.title,
-            iconPath: new vscode.ThemeIcon('git-pull-request')
-        };
-        pullRequestTreeItems.push(titleTreeItem);
+        pullRequestTreeItems.push(this.treeItemUtility.createPullRequestTitleTreeItem(pullRequestTitle));
 
         // Description
-        const descriptionTreeItem: vscode.TreeItem = {
-            label: 'Description',
-            collapsibleState: vscode.TreeItemCollapsibleState.Expanded
-        };
-        pullRequestTreeItems.push(descriptionTreeItem);
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Description'));
 
         // Work Items
-        const workItemsTreeItem: vscode.TreeItem = {
-            label: 'Work Items',
-            collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
-        };
-        pullRequestTreeItems.push(workItemsTreeItem);
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Work Items'));
 
-        const policiesTreeItem: vscode.TreeItem = {
-            label: 'Policies',
-            collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
-        };
-        pullRequestTreeItems.push(policiesTreeItem);
+        // Policies
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Policies'));
 
         // Reviewers
-        const reviewersTreeItem: vscode.TreeItem = {
-            label: 'Reviewers',
-            collapsibleState: vscode.TreeItemCollapsibleState.Expanded
-        };
-        pullRequestTreeItems.push(reviewersTreeItem);
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Reviewers'));
 
         // Commits
-        const commitsTreeItem: vscode.TreeItem = {
-            label: 'Commits',
-            collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
-        };
-        pullRequestTreeItems.push(commitsTreeItem);
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Commits'));
 
         // Overall Comments
-        const overallComments: vscode.TreeItem = {
-            label: 'Overall Comments',
-            collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
-        };
-        pullRequestTreeItems.push(overallComments);
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Overall Comments'));
 
         // Files
-        const filesTreeItem: vscode.TreeItem = {
-            label: 'Files',
-            collapsibleState: vscode.TreeItemCollapsibleState.Expanded
-        };
-        pullRequestTreeItems.push(filesTreeItem);
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Files'));
 
         return pullRequestTreeItems;
     }

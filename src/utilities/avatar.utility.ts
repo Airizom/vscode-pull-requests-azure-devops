@@ -19,7 +19,7 @@ export class AvatarUtility {
      * @returns {(Promise<vscode.Uri | vscode.ThemeIcon>)}
      * @memberof AvatarUtility
      */
-    public async getProfilePic(id?: string): Promise<vscode.Uri | vscode.ThemeIcon> {
+    public async getProfilePicFromId(id?: string): Promise<vscode.Uri | vscode.ThemeIcon> {
         if (id) {
             if (this.cachedAvatars.has(id)) {
                 const avatarValue: string | undefined = this.cachedAvatars.get(id);
@@ -34,4 +34,5 @@ export class AvatarUtility {
         }
         return new vscode.ThemeIcon('account');
     }
+
 }
