@@ -82,7 +82,7 @@ export class ConfigManager {
     private showCollectionUrlInput(): void {
         vscode.window.showInputBox({
             ignoreFocusOut: true,
-            placeHolder: 'collection url...',
+            placeHolder: 'Collection URL...',
             prompt: 'Enter the Azure Devops collection url'
         }).then((value: string | undefined) => {
             this._collection = value;
@@ -106,13 +106,12 @@ export class ConfigManager {
                                             Copy this access to token and paste it into the prompt above.`);
         vscode.window.showInputBox({
             ignoreFocusOut: true,
-            placeHolder: 'personal access token...',
+            placeHolder: 'Personal Access Token...',
             prompt: 'Enter your Azure Devops personal access token'
         }).then(async (value: string | undefined) => {
             if (value) {
                 this._token = value;
                 this.workspaceConfig.update(ConfigManager.PERSONAL_ACCESS_TOKEN, this.token);
-                this.establishAzureDevopsApiConnection();
                 await this.showProjectSelectionPicker();
             }
         });
@@ -163,10 +162,15 @@ export class ConfigManager {
      * @memberof ConfigManager
      */
     private async showProjectSelectionPicker(): Promise<void> {
+        this.establishAzureDevopsApiConnection();
         try {
             const projects: ProjectInfo[] = await this.getListOfProjects();
             if (projects.length) {
-                vscode.window.showQuickPick(projects.map((value => value.name as string))).then((value: string | undefined) => {
+                const options: vscode.QuickPickOptions = {
+                    ignoreFocusOut: true,
+                    placeHolder: 'Select a Project...'
+                };
+                vscode.window.showQuickPick(projects.map((value => value.name as string)), options).then((value: string | undefined) => {
                     this._project = value;
                     this.workspaceConfig.update(ConfigManager.PROJECT_SECTION, this.project);
                 });
