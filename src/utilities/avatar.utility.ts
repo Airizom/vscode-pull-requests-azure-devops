@@ -1,7 +1,6 @@
 import { PullRequestsService } from '../services/pull-request.service';
 import * as vscode from 'vscode';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
-import Axios, { AxiosResponse } from 'axios';
 
 export class AvatarUtility {
 
