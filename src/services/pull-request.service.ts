@@ -230,12 +230,16 @@ export class PullRequestsService {
      * @returns {(Promise<WorkItemType | undefined>)}
      * @memberof PullRequestsService
      */
-    public async getWorkItemIcon(type: string): Promise<WorkItemType | undefined> {
+    public async getWorkItemIcon(type: string): Promise<string> {
         if (this.workItemTrackingApi && this.project) {
-            return this.workItemTrackingApi.getWorkItemType(this.project, type);
+            const workItemType: WorkItemType = await this.workItemTrackingApi.getWorkItemType(this.project, type);
+            const icon: NodeJS.ReadableStream = await this.workItemTrackingApi.getWorkItemIconSvg(workItemType.icon?.id ?? '', workItemType.color);
+            const stringToReturn: string = Buffer.from(icon.read().toString()).toString('base64');
+
+            return stringToReturn;
         }
 
-        return undefined;
+        return '';
     }
 
     /**

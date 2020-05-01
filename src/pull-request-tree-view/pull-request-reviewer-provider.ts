@@ -118,7 +118,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 const workItemTreeItems: vscode.TreeItem[] = [];
                 for (const workItem of workItems) {
                     if (workItem.fields && workItem.url) {
-                        const type: WorkItemType | undefined = await this.pullRequestsService.getWorkItemIcon(workItem.fields['System.WorkItemType']);
+                        const iconData: string = await this.pullRequestsService.getWorkItemIcon(workItem.fields['System.WorkItemType']);
+                        const iconUri: vscode.Uri = vscode.Uri.parse(`data:image/svg+xml;base64,${iconData}`);
                         workItemTreeItems.push({
                             label: workItem.fields['System.Title'],
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
@@ -127,7 +128,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                                 command: 'pullRequestsExplorer.openLink',
                                 arguments: [workItem._links?.html?.href ?? '']
                             },
-                            iconPath: type?.icon?.url ? vscode.Uri.parse(type?.icon.url) : undefined
+                            iconPath: iconUri
                         });
                     }
                 }
