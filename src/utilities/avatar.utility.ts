@@ -1,6 +1,7 @@
 import { PullRequestsService } from '../services/pull-request.service';
 import * as vscode from 'vscode';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
+import Axios, { AxiosResponse } from 'axios';
 
 export class AvatarUtility {
 
@@ -19,7 +20,7 @@ export class AvatarUtility {
      * @returns {(Promise<vscode.Uri | vscode.ThemeIcon>)}
      * @memberof AvatarUtility
      */
-    public async getProfilePicFromId(id?: string): Promise<vscode.Uri | vscode.ThemeIcon> {
+    public async getProfilePicFromId(id?: string, name?: string): Promise<vscode.Uri | vscode.ThemeIcon> {
         if (id) {
             if (this.cachedAvatars.has(id)) {
                 const avatarValue: string | undefined = this.cachedAvatars.get(id);
@@ -32,6 +33,11 @@ export class AvatarUtility {
                 return vscode.Uri.parse(`data:image/*;base64,${avatarValue}`);
             }
         }
+
+        if (name) {
+            return vscode.Uri.parse(`https://ui-avatars.com/api/?name=${name}&background=5BA4C2&color=252B33&font-size=0.7`);
+        }
+
         return new vscode.ThemeIcon('account');
     }
 

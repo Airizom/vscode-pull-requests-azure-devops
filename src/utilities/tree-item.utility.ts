@@ -17,11 +17,11 @@ export class TreeItemUtility {
      * @returns {Promise<vscode.TreeItem>}
      * @memberof TreeItemUtility
      */
-    public async getCreatedByStatusTreeItem(label: string, userId: string): Promise<vscode.TreeItem> {
+    public async getCreatedByStatusTreeItem(label: string, userId: string, name?: string): Promise<vscode.TreeItem> {
         return {
             label: label,
             collapsibleState: vscode.TreeItemCollapsibleState.None,
-            iconPath: await this.avatarUtility.getProfilePicFromId(userId)
+            iconPath: await this.avatarUtility.getProfilePicFromId(userId, name)
         };
     }
 

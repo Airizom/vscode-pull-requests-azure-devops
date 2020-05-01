@@ -153,7 +153,7 @@ export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
                 const treeItem: vscode.TreeItem = {
                     collapsibleState: TreeItemCollapsibleState.None,
                     label: reviewer.displayName,
-                    iconPath: await this.avatarUtility.getProfilePicFromId(reviewer.id),
+                    iconPath: await this.avatarUtility.getProfilePicFromId(reviewer.id, reviewer.displayName),
                     description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote)
                 };
                 reviewerTreeItem.push(treeItem);

@@ -159,7 +159,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
                         label: reviewer.displayName,
                         description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote),
-                        iconPath: await this.avatarUtility.getProfilePicFromId(reviewer.id)
+                        iconPath: await this.avatarUtility.getProfilePicFromId(reviewer.id, reviewer.displayName)
                     });
                 }
             }
@@ -195,7 +195,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     });
                     if (firstComment) {
                         commentsTreeItems.push(
-                            new CommentTreeItem(firstComment, thread, await this.avatarUtility.getProfilePicFromId(firstComment.author?.id))
+                            new CommentTreeItem(
+                                firstComment,
+                                thread,
+                                await this.avatarUtility.getProfilePicFromId(firstComment.author?.id, firstComment.author?.displayName)
+                            )
                         );
                     }
                 }
@@ -321,7 +325,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                             new CommentTreeItem(
                                 firstComment,
                                 thread,
-                                await this.avatarUtility.getProfilePicFromId(firstComment.author?.id),
+                                await this.avatarUtility.getProfilePicFromId(firstComment.author?.id, firstComment.author?.displayName),
                                 thread.comments && thread.comments?.length > 1
                             )
                         );
@@ -1236,7 +1240,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         const userId: string = this.pullRequest.createdBy?.id as string;
 
         // User
-        pullRequestTreeItems.push(await this.treeItemUtility.getCreatedByStatusTreeItem(label, userId));
+        pullRequestTreeItems.push(await this.treeItemUtility.getCreatedByStatusTreeItem(label, userId, this.pullRequest.createdBy?.displayName));
 
         const sourceRefName: string = this.pullRequest.sourceRefName ?? '';
         const targetRefName: string = this.pullRequest.targetRefName ?? '';
