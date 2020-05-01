@@ -21,7 +21,7 @@ import { DiffCommentService } from '../services/diff-comment.service';
 import { PullRequestVote } from '../models/pull-request-vote.model';
 import { PullRequesetComment } from '../models/pull-request-comment.model';
 import { ResourceRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
-import { WorkItem, WorkItemType } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
+import { WorkItem } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { CommentTreeItem } from '../models/comment-tree-item';
 import * as path from 'path';
 import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
