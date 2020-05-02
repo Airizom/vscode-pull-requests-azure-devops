@@ -304,7 +304,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                             completePath,
                             isCollapsible,
                             PullRequestReviewerTreeProvider.getFileDescription(file.changeType),
-                            command
+                            command,
+                            element.pullRequestChanges
                         );
                         treeItems.push(fileItem);
                     }
@@ -322,12 +323,20 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         return !value.isDeleted;
                     });
                     if (firstComment) {
+                        const command: vscode.Command = {
+                            title: '',
+                            command: 'pullRequestsExplorer.openFileDiff',
+                            arguments: [
+                                element.pullRequestChanges?.find((value: GitPullRequestChange) => value.item?.path === thread.threadContext?.filePath)
+                            ]
+                        };
                         commentsTreeItems.push(
                             new CommentTreeItem(
                                 firstComment,
                                 thread,
                                 await this.avatarUtility.getProfilePicFromId(firstComment.author?.id, firstComment.author?.displayName),
-                                thread.comments && thread.comments?.length > 1
+                                thread.comments && thread.comments?.length > 1,
+                                command
                             )
                         );
                     }
