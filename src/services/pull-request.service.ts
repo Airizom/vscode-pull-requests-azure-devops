@@ -1,6 +1,5 @@
-import * as azdev from 'azure-devops-node-api';
 import * as vscode from 'vscode';
-import { IHttpClientResponse, IRequestHandler } from 'azure-devops-node-api/interfaces/common/VsoBaseInterfaces';
+import { IHttpClientResponse } from 'azure-devops-node-api/interfaces/common/VsoBaseInterfaces';
 import { IGitApi } from 'azure-devops-node-api/GitApi';
 import {
     Comment,
@@ -20,8 +19,6 @@ import {
     PullRequestStatus,
     GitPullRequestStatus
 } from 'azure-devops-node-api/interfaces/GitInterfaces';
-import { spawnSync, SpawnSyncReturns } from 'child_process';
-import { TextDecoder } from 'util';
 import { PullRequestVote } from '../models/pull-request-vote.model';
 import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
 import {
@@ -33,32 +30,9 @@ import {
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
 import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
+import { AzureDevopsService } from './azure-devops.service';
 
-export class PullRequestsService {
-
-    /**
-     * Get the name of the local git repo that is setup
-     *
-     * @readonly
-     * @type {string}
-     * @memberof PullRequestsService
-     */
-    public get currentRepoName(): string {
-        if (vscode.workspace.workspaceFolders) {
-            const repoNameBuffer: SpawnSyncReturns<Buffer> =
-                spawnSync('git', ['config', '--get', 'remote.origin.url'], { cwd: vscode.workspace.workspaceFolders[0].uri.fsPath });
-            const decoder: TextDecoder = new TextDecoder('utf-8');
-            if (repoNameBuffer.stdout) {
-                const url: string = decoder.decode(repoNameBuffer.stdout);
-                const urlPathFragments: string[] = url.trim().split('/');
-                const name: string | undefined = urlPathFragments.pop();
-                if (name) {
-                    return name;
-                }
-            }
-        }
-        return '';
-    }
+export class PullRequestsService extends AzureDevopsService {
 
     public gitApi: IGitApi | undefined;
     public workItemTrackingApi: IWorkItemTrackingApi | undefined;
@@ -68,15 +42,14 @@ export class PullRequestsService {
 
     // Setting Azure Devops settings from vscode
     private readonly workspaceConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
-    private collection: string | undefined;
-    private token: string | undefined;
     private project: string | undefined;
 
     // Azure Devops API Connection
-    private authHandler: IRequestHandler | undefined;
-    private connection: azdev.WebApi | undefined;
     private repository: GitRepository | undefined;
 
+    constructor() {
+        super();
+    }
 
     /**
      * Get the policies for a pull request
@@ -359,6 +332,11 @@ export class PullRequestsService {
     public async activate(): Promise<void> {
         this.setTfvcProperties();
         await this.establishAzureDevopsApiConnection();
+        if (this.connection) {
+            this.gitApi = await this.connection.getGitApi();
+            this.workItemTrackingApi = await this.connection.getWorkItemTrackingApi();
+            this.policyApi = await this.connection.getPolicyApi();
+        }
         this.user = await this.getUserProfile();
         this.repository = await this.gitApi?.getRepository(this.currentRepoName, this.project);
     }
@@ -802,23 +780,5 @@ export class PullRequestsService {
         this.token = this.workspaceConfig.get('vscode-pull-requests-azure-devops.access-token');
         this.project = this.workspaceConfig.get('vscode-pull-requests-azure-devops.project');
     }
-
-    /**
-     * Establish a connection to the Azure Devops api
-     *
-     * @private
-     * @returns {Promise<void>}
-     * @memberof CodeReviewsService
-     */
-    private async establishAzureDevopsApiConnection(): Promise<void> {
-        if (this.collection && this.token) {
-            this.authHandler = azdev.getPersonalAccessTokenHandler(this.token);
-            this.connection = new azdev.WebApi(this.collection, this.authHandler);
-            this.gitApi = await this.connection.getGitApi();
-            this.workItemTrackingApi = await this.connection.getWorkItemTrackingApi();
-            this.policyApi = await this.connection.getPolicyApi();
-        }
-    }
-
 
 }
