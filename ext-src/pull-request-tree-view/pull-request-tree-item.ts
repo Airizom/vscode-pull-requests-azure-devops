@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { GitPullRequest } from '../../node_modules/azure-devops-node-api/interfaces/GitInterfaces';
+import { GitPullRequest } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { PullRequestsProvider } from './pull-request-provider';
 
 export class PullRequestTreeItem extends vscode.TreeItem {
