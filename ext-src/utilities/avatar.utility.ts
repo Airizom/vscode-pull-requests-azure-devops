@@ -37,7 +37,7 @@ export class AvatarUtility {
             return vscode.Uri.parse(`https://ui-avatars.com/api/?name=${name}&background=5BA4C2&color=252B33&font-size=0.7`);
         }
 
-        return new vscode.ThemeIcon('account');
+        return new (vscode.ThemeIcon as any)('account');
     }
 
 }

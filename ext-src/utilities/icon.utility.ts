@@ -14,19 +14,19 @@ export class IconUtility {
     public static getPolicyStatusIcon(status: PolicyEvaluationStatus | undefined): vscode.ThemeIcon {
         switch (status) {
             case PolicyEvaluationStatus.Approved:
-                return new vscode.ThemeIcon('check');
+                return new (vscode.ThemeIcon as any)('check');
             case PolicyEvaluationStatus.Broken:
-                return new vscode.ThemeIcon('debug');
+                return new (vscode.ThemeIcon as any)('debug');
             case PolicyEvaluationStatus.NotApplicable:
-                return new vscode.ThemeIcon('circle-slash');
+                return new (vscode.ThemeIcon as any)('circle-slash');
             case PolicyEvaluationStatus.Queued:
-                return new vscode.ThemeIcon('watch');
+                return new (vscode.ThemeIcon as any)('watch');
             case PolicyEvaluationStatus.Rejected:
-                return new vscode.ThemeIcon('x');
+                return new (vscode.ThemeIcon as any)('x');
             case PolicyEvaluationStatus.Running:
-                return new vscode.ThemeIcon('play');
+                return new (vscode.ThemeIcon as any)('play');
             default:
-                return new vscode.ThemeIcon('question');
+                return new (vscode.ThemeIcon as any)('question');
         }
     }
 }

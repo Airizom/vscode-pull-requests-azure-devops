@@ -180,7 +180,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                             command: 'pullRequestsExplorer.openLink',
                             arguments: [this.pullRequestsService.getCommitRemoteUrl(commit.commitId ? commit.commitId : '')]
                         },
-                        iconPath: new vscode.ThemeIcon('git-commit')
+                        iconPath: new (vscode.ThemeIcon as any)('git-commit')
                     });
                 }
             }

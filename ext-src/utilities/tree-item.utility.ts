@@ -38,7 +38,7 @@ export class TreeItemUtility {
             collapsibleState: vscode.TreeItemCollapsibleState.None,
             label: `${FilePathUtility.getLastPathFragment(sourceRefName ?? '')} into ${FilePathUtility.getLastPathFragment(targetRefName ?? '')}`,
             tooltip: `${sourceRefName} into ${targetRefName}`,
-            iconPath: new vscode.ThemeIcon('git-branch')
+            iconPath: new (vscode.ThemeIcon as any)('git-branch')
         };
     }
 
@@ -55,7 +55,7 @@ export class TreeItemUtility {
             collapsibleState: vscode.TreeItemCollapsibleState.None,
             label: pullRequestTitle,
             tooltip: pullRequestTitle,
-            iconPath: new vscode.ThemeIcon('git-pull-request')
+            iconPath: new (vscode.ThemeIcon as any)('git-pull-request')
         };
     }
 

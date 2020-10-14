@@ -19,7 +19,7 @@ export class PullRequestTreeItem extends vscode.TreeItem {
     ) {
         super(pullRequest.title ? pullRequest.title : '', vscode.TreeItemCollapsibleState.Collapsed);
         if (pullRequest.reviewers && !PullRequestsProvider.pullRequestHasVote(pullRequest.reviewers)) {
-            this.iconPath = new vscode.ThemeIcon('circle-filled');
+            this.iconPath = new (vscode.ThemeIcon as any)('circle-filled');
         }
     }
 
