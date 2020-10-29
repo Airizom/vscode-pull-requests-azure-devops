@@ -744,31 +744,6 @@ export class PullRequestsService extends AzureDevopsService {
     }
 
     /**
-     * Get the url to make profile api requests to.
-     * This is different from the default collection url.
-     * Since the profile api resource is hosted on a diffeent subdomain we
-     * must append '.vssps' to the end of the first subdomain on the collection url.
-     *
-     * @private
-     * @returns {string}
-     * @memberof PullRequestsService
-     */
-    private getProfileApiUrl(): string {
-        let profileApiBaseUrl: string = this.collection as string;
-        const indexOfDomain: number = profileApiBaseUrl.indexOf('//');
-        let nextDotOrColonIndex: number = profileApiBaseUrl.indexOf('.');
-        if (nextDotOrColonIndex === -1) {
-            nextDotOrColonIndex = profileApiBaseUrl.indexOf(':');
-        }
-        if (nextDotOrColonIndex !== -1) {
-            const domain: string = profileApiBaseUrl.substring(indexOfDomain + 2, nextDotOrColonIndex);
-            profileApiBaseUrl
-                = `${profileApiBaseUrl.substr(0, indexOfDomain + 2)}${domain}.vssps${profileApiBaseUrl.substr(domain.length + indexOfDomain + 2)}`;
-        }
-        return profileApiBaseUrl;
-    }
-
-    /**
      * Set up all properties used for making a azure devops api requests
      *
      * @private
