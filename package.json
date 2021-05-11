@@ -254,7 +254,7 @@
     "dependencies": {
         "azure-devops-node-api": "^10.0.0",
         "fs": "0.0.1-security",
-        "lodash": "^4.17.15",
+        "lodash": "^4.17.21",
         "minimist": "^1.2.5",
         "path": "^0.12.7"
     }
