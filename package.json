@@ -8,7 +8,7 @@
         "url": "https://github.com/Airizom/vscode-pull-requests-azure-devops.git"
     },
     "icon": "pull-request-icon.png",
-    "version": "0.0.12",
+    "version": "0.0.13",
     "engines": {
         "vscode": "^1.44.0"
     },
