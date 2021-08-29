@@ -54,7 +54,7 @@ export class PullRequestsService extends AzureDevopsService {
      */
     public async getProfile(id: string = 'me'): Promise<Profile | undefined> {
         if (this.connection && this.collection) {
-            const response: IHttpClientResponse = await this.connection.rest.client.get(`${this.collection}_apis/profile/profiles/${id}?api-version=5.1&details=true&coreAttributes=Email,Avatar`, { 'Content-Type': 'application/json' });
+            const response: IHttpClientResponse = await this.connection.rest.client.get(`${this.collection.replace('https://', 'https://vssps.')}/_apis/profile/profiles/${id}?api-version=5.1&details=true&coreAttributes=Email,Avatar`, { 'Content-Type': 'application/json' });
             const statusCodeOk: number = 200;
             if (response.message && response.message.statusCode === statusCodeOk) {
                 const body: string = await response.readBody();

@@ -8,7 +8,7 @@
         "url": "https://github.com/Airizom/vscode-pull-requests-azure-devops.git"
     },
     "icon": "pull-request-icon.png",
-    "version": "0.0.11",
+    "version": "0.0.12",
     "engines": {
         "vscode": "^1.44.0"
     },
@@ -252,10 +252,10 @@
         "vscode-test": "^1.3.0"
     },
     "dependencies": {
-        "azure-devops-node-api": "^10.0.0",
+        "azure-devops-node-api": "11.0.1",
         "fs": "0.0.1-security",
-        "lodash": "^4.17.15",
-        "minimist": "^1.2.5",
-        "path": "^0.12.7"
+        "lodash": "4.17.21",
+        "minimist": "1.2.5",
+        "path": "0.12.7"
     }
 }

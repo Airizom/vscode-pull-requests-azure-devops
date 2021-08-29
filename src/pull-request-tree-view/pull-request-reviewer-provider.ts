@@ -483,7 +483,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     /**
      * The close active diff editors so they can't be used anymore.
      * This needs to be done because the user potentially could have closed the pull
-     * reqeust tree view and the pull request commands have benn removed.
+     * request tree view and the pull request commands have been removed.
      *
      * @private
      * @returns {((e: vscode.TextEditor | undefined) => any)}
@@ -1021,7 +1021,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     }
 
     /**
-     * Set commmand to mark a code review to 'Looks Good'
+     * Set command to mark a code review to 'Looks Good'
      *
      * @private
      * @memberof CodeReviewerProvider
