@@ -8,6 +8,7 @@ import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
 import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
 import * as vscode from 'vscode';
 import { PullRequestVote } from '../models/pull-request-vote.model';
+import { ConfigManager } from '../utilities/config-manager';
 import { AzureDevopsService } from './azure-devops.service';
 
 export class PullRequestsService extends AzureDevopsService {
@@ -17,6 +18,7 @@ export class PullRequestsService extends AzureDevopsService {
     public policyApi: IPolicyApi | undefined;
 
     public user: any | undefined;
+    public currentRepoName: string = '';
 
     // Setting Azure Devops settings from vscode
     private readonly workspaceConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
@@ -416,12 +418,13 @@ export class PullRequestsService extends AzureDevopsService {
      * @returns {Promise<GitPullRequest[]>}
      * @memberof PullRequestsService
      */
-    public async getAllPullRequestsForProject(): Promise<GitPullRequest[]> {
-        return await this.gitApi?.getPullRequestsByProject(this.project || '',
+    public async getAllPullRequestsForRepository(): Promise<GitPullRequest[]> {
+        return await this.gitApi?.getPullRequests(this.currentRepoName,
             {
                 includeLinks: true,
                 status: PullRequestStatus.All
             },
+            this.project
         ) ?? [];
     }
 
@@ -627,7 +630,7 @@ export class PullRequestsService extends AzureDevopsService {
      */
     public async getPullRequest(pullRequestId: number): Promise<GitPullRequest> {
         if (this.gitApi && pullRequestId) {
-            return this.gitApi.getPullRequest(this.currentRepoName, pullRequestId, this.project, undefined, undefined, undefined, true, true);
+            return this.gitApi.getPullRequestById(pullRequestId);
         }
         return {};
     }
@@ -722,9 +725,10 @@ export class PullRequestsService extends AzureDevopsService {
      * @memberof CodeReviewsService
      */
     private setTfvcProperties(): void {
-        this.collection = this.workspaceConfig.get('vscode-pull-requests-azure-devops.collection');
-        this.token = this.workspaceConfig.get('vscode-pull-requests-azure-devops.access-token');
-        this.project = this.workspaceConfig.get('vscode-pull-requests-azure-devops.project');
+        this.collection = this.workspaceConfig.get(ConfigManager.COLLECTION_SECTION);
+        this.token = this.workspaceConfig.get(ConfigManager.PERSONAL_ACCESS_TOKEN);
+        this.project = this.workspaceConfig.get(ConfigManager.PROJECT_SECTION);
+        this.currentRepoName = this.workspaceConfig.get(ConfigManager.REPO_NAME) ?? '';
     }
 
 }

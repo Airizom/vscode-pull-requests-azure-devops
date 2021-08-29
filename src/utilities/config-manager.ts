@@ -1,7 +1,9 @@
-import * as vscode from 'vscode';
-import { IRequestHandler, IHttpClientResponse } from 'azure-devops-node-api/interfaces/common/VsoBaseInterfaces';
 import * as azdev from 'azure-devops-node-api';
+import { IGitApi } from 'azure-devops-node-api/GitApi';
+import { IHttpClientResponse, IRequestHandler } from 'azure-devops-node-api/interfaces/common/VsoBaseInterfaces';
 import { ProjectInfo } from 'azure-devops-node-api/interfaces/CoreInterfaces';
+import { GitRepository } from 'azure-devops-node-api/interfaces/GitInterfaces';
+import * as vscode from 'vscode';
 
 export class ConfigManager {
 
@@ -17,10 +19,15 @@ export class ConfigManager {
         return this._project ?? '';
     }
 
+    public get repo(): string {
+        return this._repo ?? '';
+    }
+
     // Section names
-    private static readonly COLLECTION_SECTION: string = 'vscode-pull-requests-azure-devops.collection';
-    private static readonly PERSONAL_ACCESS_TOKEN: string = 'vscode-pull-requests-azure-devops.access-token';
-    private static readonly PROJECT_SECTION: string = 'vscode-pull-requests-azure-devops.project';
+    public static readonly COLLECTION_SECTION: string = 'vscode-pull-requests-azure-devops.collection';
+    public static readonly PERSONAL_ACCESS_TOKEN: string = 'vscode-pull-requests-azure-devops.access-token';
+    public static readonly PROJECT_SECTION: string = 'vscode-pull-requests-azure-devops.project';
+    public static readonly REPO_NAME: string = 'vscode-pull-requests-azure-devops.repo';
 
     // Azure Devops API Connection
     private authHandler: IRequestHandler | undefined;
@@ -29,6 +36,7 @@ export class ConfigManager {
     private _collection: string | undefined;
     private _token: string | undefined;
     private _project: string | undefined;
+    private _repo: string | undefined;
 
     private readonly workspaceConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
 
@@ -156,7 +164,7 @@ export class ConfigManager {
 
     /**
      * Show a list of projects returned from the azure devops api.
-     * Let the user select the projec they wish to use for the extension.
+     * Let the user select the project they wish to use for the extension.
      *
      * @private
      * @memberof ConfigManager
@@ -170,15 +178,33 @@ export class ConfigManager {
                     ignoreFocusOut: true,
                     placeHolder: 'Select a Project...'
                 };
-                vscode.window.showQuickPick(projects.map((value => value.name as string)), options).then((value: string | undefined) => {
+                vscode.window.showQuickPick(projects.map((value => value.name as string)), options).then(async (value: string | undefined) => {
                     this._project = value;
                     this.workspaceConfig.update(ConfigManager.PROJECT_SECTION, this.project);
+                    await this.showRepositorySelectionPicker();
                 });
             } else {
-                vscode.window.showErrorMessage(`No projects found for the collection url ${this.collection}. Verify that the collection url and token are correct by opening VSCode setting and navigating to the VSCode Pull Reqeuest Azure Devops section.`);
+                vscode.window.showErrorMessage(`No projects found for the collection url ${this.collection}. Verify that the collection url and token are correct by opening VSCode setting and navigating to the VSCode Pull Request Azure Devops section.`);
             }
         } catch (error) {
             vscode.window.showErrorMessage(error);
         }
+    }
+
+    /**
+     * Get a list of repositories and show them to the user
+     * to select a repository to use for pull requests.
+     *
+     * @private
+     * @memberof ConfigManager
+     */
+    private async showRepositorySelectionPicker(): Promise<void> {
+        const gitConnection: IGitApi | undefined = await this.connection?.getGitApi();
+        const repositories: GitRepository[] = await gitConnection?.getRepositories(this.project) ?? [];
+        const options: vscode.QuickPickOptions = { ignoreFocusOut: true, placeHolder: 'Select a Repository...' };
+        vscode.window.showQuickPick(repositories.map((value => value.name as string)), options).then((value: string | undefined) => {
+            this._repo = value;
+            this.workspaceConfig.update(ConfigManager.REPO_NAME, this.repo);
+        });
     }
 }

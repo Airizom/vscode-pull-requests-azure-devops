@@ -1,7 +1,4 @@
 import * as azdev from 'azure-devops-node-api';
-import * as vscode from 'vscode';
-import { spawnSync, SpawnSyncReturns } from 'child_process';
-import { TextDecoder } from 'util';
 import { IRequestHandler } from 'azure-devops-node-api/interfaces/common/VsoBaseInterfaces';
 
 export abstract class AzureDevopsService {
@@ -27,30 +24,4 @@ export abstract class AzureDevopsService {
             this.connection = new azdev.WebApi(this.collection, this.authHandler);
         }
     }
-
-    /**
-     * Get the name of the local git repo that is setup
-     *
-     * @readonly
-     * @type {string}
-     * @memberof AzureDevopsService
-     */
-    public get currentRepoName(): string {
-        if (vscode.workspace.workspaceFolders) {
-            const repoNameBuffer: SpawnSyncReturns<Buffer> =
-                spawnSync('git', ['config', '--get', 'remote.origin.url'], { cwd: vscode.workspace.workspaceFolders[0].uri.fsPath });
-            const decoder: TextDecoder = new TextDecoder('utf-8');
-            if (repoNameBuffer.stdout) {
-                const url: string = decoder.decode(repoNameBuffer.stdout);
-                const urlPathFragments: string[] = url.trim().split('/');
-                const name: string | undefined = urlPathFragments.pop();
-                if (name) {
-                    return name;
-                }
-            }
-        }
-        return '';
-    }
-
-
 }

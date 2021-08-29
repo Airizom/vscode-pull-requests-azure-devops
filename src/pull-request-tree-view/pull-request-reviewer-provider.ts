@@ -1,36 +1,25 @@
-import * as vscode from 'vscode';
-import { PullRequestsService } from '../services/pull-request.service';
-import {
-    Comment,
-    CommentPosition,
-    CommentThreadContext,
-    CommentThreadStatus,
-    GitItem,
-    GitPullRequest,
-    GitPullRequestChange,
-    GitPullRequestCommentThread,
-    PullRequestStatus,
-    VersionControlChangeType
-} from 'azure-devops-node-api/interfaces/GitInterfaces';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as lodash from 'lodash';
-import { FolderTreeItem } from '../models/folder-tree-item';
-import { PullRequestsProvider } from './pull-request-provider';
-import { DiffCommentService } from '../services/diff-comment.service';
-import { PullRequestVote } from '../models/pull-request-vote.model';
-import { PullRequesetComment } from '../models/pull-request-comment.model';
 import { ResourceRef } from 'azure-devops-node-api/interfaces/common/VSSInterfaces';
-import { WorkItem } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
-import { CommentTreeItem } from '../models/comment-tree-item';
-import * as path from 'path';
-import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
-import { FilePathUtility } from '../utilities/file-path.utility';
-import { FileTreeItem } from '../models/file-tree-item';
-import { AvatarUtility } from '../utilities/avatar.utility';
+import { Comment, CommentPosition, CommentThreadContext, CommentThreadStatus, GitItem, GitPullRequest, GitPullRequestChange, GitPullRequestCommentThread, PullRequestStatus, VersionControlChangeType } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
+import { WorkItem } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
+import * as fs from 'fs';
+import * as lodash from 'lodash';
+import * as os from 'os';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import { CommentTreeItem } from '../models/comment-tree-item';
+import { FileTreeItem } from '../models/file-tree-item';
+import { FolderTreeItem } from '../models/folder-tree-item';
+import { PullRequesetComment } from '../models/pull-request-comment.model';
+import { PullRequestVote } from '../models/pull-request-vote.model';
+import { DiffCommentService } from '../services/diff-comment.service';
+import { PullRequestsService } from '../services/pull-request.service';
+import { AvatarUtility } from '../utilities/avatar.utility';
+import { FilePathUtility } from '../utilities/file-path.utility';
 import { IconUtility } from '../utilities/icon.utility';
 import { TreeItemUtility } from '../utilities/tree-item.utility';
+import { DiffTextDocumentContentProvider } from './diff-text-document-content-provider';
+import { PullRequestsProvider } from './pull-request-provider';
 
 export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -97,7 +86,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         if (!element) {
             if (this.pullRequest.pullRequestId) {
                 this.pullRequest = await this.pullRequestsService.getPullRequest(this.pullRequest.pullRequestId);
-                return this.createPullRequestReviewTree(this.pullRequest.createdBy?.displayName, this.pullRequest.status ?? PullRequestStatus.NotSet);
+                return this.createPullRequestReviewTree(this.pullRequest?.createdBy?.displayName, this.pullRequest.status ?? PullRequestStatus.NotSet);
             }
             return [];
         }
@@ -233,7 +222,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 const fileChanges: GitPullRequestChange[] = await this.pullRequestsService.getFilesChanged(
                     this.pullRequest.pullRequestId
                 );
-                if (fileChanges) {
+                if (fileChanges?.length) {
                     const files: string[] = lodash.cloneDeep(fileChanges).map(value => value.item?.path ?? '');
                     const commonPath: string = FilePathUtility.getCommonPath(files);
                     filesTreeItems.push(new FolderTreeItem(commonPath, fileChanges));
@@ -1247,7 +1236,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         const pullRequestTreeItems: vscode.TreeItem[] = [];
 
         const label: string = `${userName} - ${PullRequestStatus[status]}`;
-        const userId: string = this.pullRequest.createdBy?.id as string;
+        const userId: string = this.pullRequest?.createdBy?.id as string;
 
         // User
         pullRequestTreeItems.push(await this.treeItemUtility.getCreatedByStatusTreeItem(label, userId, this.pullRequest.createdBy?.displayName));

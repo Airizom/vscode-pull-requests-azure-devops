@@ -133,7 +133,7 @@ export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
         }
 
         if (element.label === 'All pull requests') {
-            const pullRequests: GitPullRequest[] = await this.pullRequestsService.getAllPullRequestsForProject();
+            const pullRequests: GitPullRequest[] = await this.pullRequestsService.getAllPullRequestsForRepository();
             const pullRequestsTreeItems: PullRequestTreeItem[] = [];
             for (const pullRequest of pullRequests) {
                 const command: vscode.Command = {
