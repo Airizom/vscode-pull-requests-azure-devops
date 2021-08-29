@@ -1,11 +1,11 @@
-import * as vscode from 'vscode';
-import { PullRequestsService } from '../services/pull-request.service';
 import { GitPullRequest, GitPullRequestCommentThread, IdentityRefWithVote } from 'azure-devops-node-api/interfaces/GitInterfaces';
-import { PullRequestTreeItem } from './pull-request-tree-item';
+import * as vscode from 'vscode';
 import { TreeItemCollapsibleState } from 'vscode';
-import { PullRequestReviewerTreeProvider } from './pull-request-reviewer-provider';
 import { PullRequestVote } from '../models/pull-request-vote.model';
+import { PullRequestsService } from '../services/pull-request.service';
 import { AvatarUtility } from '../utilities/avatar.utility';
+import { PullRequestReviewerTreeProvider } from './pull-request-reviewer-provider';
+import { PullRequestTreeItem } from './pull-request-tree-item';
 
 export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
     public _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
@@ -133,7 +133,7 @@ export class PullRequestsProvider implements vscode.TreeDataProvider<any> {
         }
 
         if (element.label === 'All pull requests') {
-            const pullRequests: GitPullRequest[] = await this.pullRequestsService.getAllPullRequestsForRepository();
+            const pullRequests: GitPullRequest[] = await this.pullRequestsService.getAllPullRequestsForProject();
             const pullRequestsTreeItems: PullRequestTreeItem[] = [];
             for (const pullRequest of pullRequests) {
                 const command: vscode.Command = {

@@ -1,35 +1,13 @@
-import * as vscode from 'vscode';
-import { IHttpClientResponse } from 'azure-devops-node-api/interfaces/common/VsoBaseInterfaces';
 import { IGitApi } from 'azure-devops-node-api/GitApi';
-import {
-    Comment,
-    CommentThreadContext,
-    CommentThreadStatus,
-    FileDiff,
-    FileDiffsCriteria,
-    GitItem,
-    GitPullRequest,
-    GitPullRequestChange,
-    GitPullRequestCommentThread,
-    GitPullRequestIteration,
-    GitPullRequestIterationChanges,
-    GitRepository,
-    GitVersionOptions,
-    GitVersionType,
-    PullRequestStatus,
-    GitPullRequestStatus
-} from 'azure-devops-node-api/interfaces/GitInterfaces';
-import { PullRequestVote } from '../models/pull-request-vote.model';
-import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
-import {
-    WorkItem,
-    WorkItemErrorPolicy,
-    WorkItemExpand,
-    WorkItemType
-} from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
-import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
-import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
+import { IHttpClientResponse } from 'azure-devops-node-api/interfaces/common/VsoBaseInterfaces';
+import { Comment, CommentThreadContext, CommentThreadStatus, FileDiff, FileDiffsCriteria, GitItem, GitPullRequest, GitPullRequestChange, GitPullRequestCommentThread, GitPullRequestIteration, GitPullRequestIterationChanges, GitPullRequestStatus, GitRepository, GitVersionOptions, GitVersionType, PullRequestStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
+import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
+import { WorkItem, WorkItemErrorPolicy, WorkItemExpand, WorkItemType } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
+import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
+import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
+import * as vscode from 'vscode';
+import { PullRequestVote } from '../models/pull-request-vote.model';
 import { AzureDevopsService } from './azure-devops.service';
 
 export class PullRequestsService extends AzureDevopsService {
@@ -438,29 +416,13 @@ export class PullRequestsService extends AzureDevopsService {
      * @returns {Promise<GitPullRequest[]>}
      * @memberof PullRequestsService
      */
-    public async getAllPullRequestsForRepository(): Promise<GitPullRequest[]> {
-        if (this.gitApi) {
-            const repository: GitRepository | void =
-                await this.gitApi.getRepository(this.currentRepoName, this.project).catch((reason: any) => {
-                    //
-                });
-            if (repository && repository.id) {
-                const pullRequests: GitPullRequest[] = await this.gitApi.getPullRequests
-                    (
-                        repository.id,
-                        {
-                            includeLinks: true,
-                            status: PullRequestStatus.All
-                        },
-                        this.project,
-                        undefined,
-                        undefined,
-                        200
-                    );
-                return pullRequests;
-            }
-        }
-        return [];
+    public async getAllPullRequestsForProject(): Promise<GitPullRequest[]> {
+        return await this.gitApi?.getPullRequestsByProject(this.project || '',
+            {
+                includeLinks: true,
+                status: PullRequestStatus.All
+            },
+        ) ?? [];
     }
 
     /**
@@ -741,6 +703,16 @@ export class PullRequestsService extends AzureDevopsService {
         }
 
         return [];
+    }
+
+    /**
+     * Get a list of all repositories contained within a given project.
+     *
+     * @private
+     * @memberof CodeReviewsService
+     */
+    public async getListOfRepositories(): Promise<GitRepository[] | undefined> {
+        return this.gitApi?.getRepositories(this.project);
     }
 
     /**
