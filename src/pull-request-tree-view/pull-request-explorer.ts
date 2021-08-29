@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { PullRequestsService } from '../services/pull-request.service';
+import { ConfigManager } from '../utilities/config-manager';
 import { PullRequestsProvider } from './pull-request-provider';
 
 export class PullRequestExplorer {
@@ -8,7 +9,7 @@ export class PullRequestExplorer {
     private readonly pullRequestsService: PullRequestsService = new PullRequestsService();
     private treeDataProvider: PullRequestsProvider | undefined;
 
-    constructor() {
+    constructor(private readonly configManager: ConfigManager) {
         this.activate();
     }
 
@@ -46,9 +47,12 @@ export class PullRequestExplorer {
      */
     private setRefreshCommand(): void {
         vscode.commands.registerCommand('pullRequestsExplorer.refresh', async () => {
-            if (this.treeDataProvider) {
-                this.treeDataProvider._onDidChangeTreeData.fire();
-            }
+            this.treeDataProvider?._onDidChangeTreeData.fire();
+        });
+        vscode.commands.registerCommand('pullRequestsExplorer.edit', async () => {
+            await this.configManager.showRepositorySelectionPicker();
+            this.pullRequestsService.currentRepoName = this.configManager.repo;
+            this.treeDataProvider?._onDidChangeTreeData.fire();
         });
     }
 

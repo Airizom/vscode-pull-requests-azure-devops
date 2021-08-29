@@ -109,8 +109,13 @@
             },
             {
                 "command": "pullRequestsExplorer.refresh",
-                "title": "Refresh",
+                "title": "Refresh Pull Requests",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "pullRequestsExplorer.edit",
+                "title": "Change Repository",
+                "icon": "$(edit)"
             },
             {
                 "command": "pullRequestReviewPanel.approve",
@@ -221,6 +226,11 @@
                 },
                 {
                     "command": "pullRequestsExplorer.refresh",
+                    "when": "view == pullRequestsExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "pullRequestsExplorer.edit",
                     "when": "view == pullRequestsExplorer",
                     "group": "navigation"
                 }

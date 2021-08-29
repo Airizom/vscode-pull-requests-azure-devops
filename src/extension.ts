@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { PullRequestExplorer } from './pull-request-tree-view/pull-request-explorer';
 import { DiffTextDocumentContentProvider } from './pull-request-tree-view/diff-text-document-content-provider';
+import { PullRequestExplorer } from './pull-request-tree-view/pull-request-explorer';
 import { ConfigManager } from './utilities/config-manager';
 
 // This method is called when your extension is activated
@@ -11,11 +11,10 @@ export function activate(context: vscode.ExtensionContext): void {
             new DiffTextDocumentContentProvider()
         ));
 
-    // tslint:disable-next-line: no-unused-expression
-    new PullRequestExplorer();
+    const configManager: ConfigManager = new ConfigManager();
 
     // tslint:disable-next-line: no-unused-expression
-    new ConfigManager();
+    new PullRequestExplorer(configManager);
 }
 
 

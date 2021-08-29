@@ -22,6 +22,7 @@ export class PullRequestsService extends AzureDevopsService {
 
     // Setting Azure Devops settings from vscode
     private readonly workspaceConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
+
     private project: string | undefined;
 
     // Azure Devops API Connection

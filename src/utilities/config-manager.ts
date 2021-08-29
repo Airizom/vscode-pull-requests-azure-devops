@@ -42,7 +42,24 @@ export class ConfigManager {
 
     constructor() {
         this.getAzureDevopsConfigFromSettings();
+        this.establishAzureDevopsApiConnection();
         this.showAzureSettingsPromptsIfNecessary();
+    }
+
+    /**
+     * Get a list of repositories and show them to the user
+     * to select a repository to use for pull requests.
+     *
+     * @public
+     * @memberof ConfigManager
+     */
+    public async showRepositorySelectionPicker(): Promise<void> {
+        const gitConnection: IGitApi | undefined = await this.connection?.getGitApi();
+        const repositories: GitRepository[] = await gitConnection?.getRepositories(this.project) ?? [];
+        const options: vscode.QuickPickOptions = { ignoreFocusOut: true, placeHolder: 'Select a Repository...' };
+        const result: string | undefined = await vscode.window.showQuickPick(repositories.map((value => value.name as string)), options);
+        this._repo = result;
+        this.workspaceConfig.update(ConfigManager.REPO_NAME, this.repo);
     }
 
     /**
@@ -55,6 +72,7 @@ export class ConfigManager {
         this._collection = this.workspaceConfig.get(ConfigManager.COLLECTION_SECTION);
         this._token = this.workspaceConfig.get(ConfigManager.PERSONAL_ACCESS_TOKEN) ?? '';
         this._project = this.workspaceConfig.get(ConfigManager.PROJECT_SECTION) ?? '';
+        this._repo = this.workspaceConfig.get(ConfigManager.REPO_NAME) ?? '';
     }
 
     /**
@@ -170,7 +188,6 @@ export class ConfigManager {
      * @memberof ConfigManager
      */
     private async showProjectSelectionPicker(): Promise<void> {
-        this.establishAzureDevopsApiConnection();
         try {
             const projects: ProjectInfo[] = await this.getListOfProjects();
             if (projects.length) {
@@ -189,22 +206,5 @@ export class ConfigManager {
         } catch (error) {
             vscode.window.showErrorMessage(error);
         }
-    }
-
-    /**
-     * Get a list of repositories and show them to the user
-     * to select a repository to use for pull requests.
-     *
-     * @private
-     * @memberof ConfigManager
-     */
-    private async showRepositorySelectionPicker(): Promise<void> {
-        const gitConnection: IGitApi | undefined = await this.connection?.getGitApi();
-        const repositories: GitRepository[] = await gitConnection?.getRepositories(this.project) ?? [];
-        const options: vscode.QuickPickOptions = { ignoreFocusOut: true, placeHolder: 'Select a Repository...' };
-        vscode.window.showQuickPick(repositories.map((value => value.name as string)), options).then((value: string | undefined) => {
-            this._repo = value;
-            this.workspaceConfig.update(ConfigManager.REPO_NAME, this.repo);
-        });
     }
 }
