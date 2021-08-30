@@ -316,7 +316,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                             title: '',
                             command: 'pullRequestsExplorer.openFileDiff',
                             arguments: [
-                                element.pullRequestChanges?.find((value: GitPullRequestChange) => value.item?.path === thread.threadContext?.filePath)
+                                element.pullRequestChanges?.find((value: GitPullRequestChange) => value.item?.path === thread.threadContext?.filePath),
+                                thread
                             ]
                         };
                         commentsTreeItems.push(
@@ -838,7 +839,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         if (this.pullRequest.pullRequestId) {
             await this.pullRequestsService.deleteComment(comment.commentId, comment.threadId, this.pullRequest.pullRequestId);
 
-            const commentDeletedMarkdownText: string = '*Commment Deleted*';
+            const commentDeletedMarkdownText: string = '*Comment Deleted*';
 
             thread.comments = thread.comments.map((value: vscode.Comment) => {
                 if ((value as PullRequesetComment).commentId === comment.commentId) {
@@ -1066,7 +1067,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * @private
      * @memberof CodeReviewerProvider
      */
-    private readonly setDiffEditorsCallback = async () => {
+    private readonly setDiffEditorsCallback = async (commentThread?: GitPullRequestCommentThread) => {
         this.changesetVersionDiffEditor = vscode.window.activeTextEditor;
 
         if (this.changesetVersionDiffEditor) {
@@ -1085,6 +1086,30 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     this.diffCommentService.threads = await this.pullRequestsService.getPullRequestThreads(this.pullRequest.pullRequestId);
                 }
                 await this.diffCommentService.setCommentsInDiffEditors(this.previousVersionDiffEditor as vscode.TextEditor, this.changesetVersionDiffEditor);
+                if (commentThread?.threadContext?.rightFileStart?.line &&
+                    commentThread.threadContext.rightFileStart.offset &&
+                    commentThread.threadContext?.rightFileEnd?.line &&
+                    commentThread.threadContext.rightFileEnd?.offset
+                ) {
+                    const startPos: vscode.Position
+                        = new vscode.Position(commentThread.threadContext.rightFileStart?.line - 1, commentThread.threadContext.rightFileStart.offset - 1);
+                    const endPos: vscode.Position =
+                        new vscode.Position(commentThread.threadContext.rightFileEnd.line - 1, commentThread.threadContext.rightFileEnd.offset - 1);
+                    const range: vscode.Range = new vscode.Range(startPos, endPos);
+                    this.changesetVersionDiffEditor?.revealRange(range);
+                }
+                if (commentThread?.threadContext?.leftFileStart?.line &&
+                    commentThread.threadContext.leftFileStart.offset &&
+                    commentThread.threadContext?.leftFileEnd?.line &&
+                    commentThread.threadContext.leftFileEnd?.offset
+                ) {
+                    const startPos: vscode.Position
+                        = new vscode.Position(commentThread.threadContext.leftFileStart?.line - 1, commentThread.threadContext.leftFileStart.offset - 1);
+                    const endPos: vscode.Position =
+                        new vscode.Position(commentThread.threadContext.leftFileEnd.line - 1, commentThread.threadContext.leftFileEnd.offset - 1);
+                    const range: vscode.Range = new vscode.Range(startPos, endPos);
+                    this.previousVersionDiffEditor?.revealRange(range);
+                }
             }
         }
     }
@@ -1097,7 +1122,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * @param file
      * @memberof CodeReviewerProvider
      */
-    private async showFileDiff(file: GitPullRequestChange): Promise<void> {
+    private async showFileDiff(file: GitPullRequestChange, commentThread?: GitPullRequestCommentThread): Promise<void> {
         if (this.pullRequest.lastMergeSourceCommit?.commitId &&
             this.pullRequest.lastMergeTargetCommit?.commitId &&
             this.pullRequest.lastMergeCommit?.commitId &&
@@ -1115,7 +1140,9 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     '',
                     rightDiffFilePath,
                     changeItem?.content,
-                    lastPathFragment);
+                    lastPathFragment,
+                    commentThread
+                );
             } else if (file.changeType === VersionControlChangeType.Delete) {
                 const previousItem: GitItem | undefined = await this.pullRequestsService.getFileContents(path, this.pullRequest.lastMergeTargetCommit.commitId);
                 await this.writeDiffFilesAndOpenDiffDocumentProvider(
@@ -1165,8 +1192,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * @private
      * @memberof CodeReviewerProvider
      */
-    private readonly onDiffSelection = async (file: GitPullRequestChange): Promise<void> => {
-        await this.showFileDiff(file);
+    private readonly onDiffSelection = async (file: GitPullRequestChange, commentThread?: GitPullRequestCommentThread): Promise<void> => {
+        await this.showFileDiff(file, commentThread);
     }
 
     /**
@@ -1186,14 +1213,15 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         leftContent: string = '',
         rightDiffFilePath: string,
         rightContent: string = '',
-        lastPathFragment: string | undefined
+        lastPathFragment: string | undefined,
+        commentThread?: GitPullRequestCommentThread
     ): Promise<void> {
         fs.writeFileSync(leftDiffFilePath, leftContent);
         fs.writeFileSync(rightDiffFilePath, rightContent);
         const leftUri: vscode.Uri = vscode.Uri.parse(`${DiffTextDocumentContentProvider.pullRequestDiffScheme}:${leftDiffFilePath}`);
         const rightUri: vscode.Uri = vscode.Uri.parse(`${DiffTextDocumentContentProvider.pullRequestDiffScheme}:${rightDiffFilePath}`);
         await this.closeDiffEditors();
-        await this.executeDiffCommand(leftUri, rightUri, lastPathFragment);
+        await this.executeDiffCommand(leftUri, rightUri, lastPathFragment, commentThread);
     }
 
     /**
@@ -1205,9 +1233,14 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * @param {(string | undefined)} lastPathFragment
      * @memberof PullRequestReviewerTreeProvider
      */
-    private async executeDiffCommand(leftUri: vscode.Uri, rightUri: vscode.Uri, lastPathFragment: string | undefined): Promise<void> {
-        await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, lastPathFragment);
-        await this.setDiffEditorsCallback();
+    private async executeDiffCommand(
+        leftUri: vscode.Uri,
+        rightUri: vscode.Uri,
+        lastPathFragment: string | undefined,
+        commentThread?: GitPullRequestCommentThread
+    ): Promise<void> {
+        await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, lastPathFragment, commentThread);
+        await this.setDiffEditorsCallback(commentThread);
         this.setContextMenuToHaveAddCommentItem();
     }
 

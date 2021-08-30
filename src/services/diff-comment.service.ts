@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
 import { GitPullRequestCommentThread } from 'azure-devops-node-api/interfaces/GitInterfaces';
-import { PullRequesetComment } from '../models/pull-request-comment.model';
+import * as vscode from 'vscode';
+import { PullRequesetComment as PullRequestComment } from '../models/pull-request-comment.model';
 
 export class DiffCommentService {
 
@@ -205,7 +205,7 @@ export class DiffCommentService {
                     );
                     const endPos: vscode.Position = new vscode.Position(thread.threadContext.leftFileEnd.line - 1, thread.threadContext.leftFileEnd.offset - 1);
                     const range: vscode.Range = new vscode.Range(startPos, endPos);
-                    const comments: PullRequesetComment[] = this.getCommentsForThread(thread);
+                    const comments: PullRequestComment[] = this.getCommentsForThread(thread);
                     const commentThread: vscode.CommentThread | undefined =
                         this.commentController?.createCommentThread(leftEditor.document.uri, range, comments);
                     for (const comment of comments) {
@@ -228,7 +228,7 @@ export class DiffCommentService {
                     const endPos: vscode.Position =
                         new vscode.Position(thread.threadContext.rightFileEnd.line - 1, thread.threadContext.rightFileEnd.offset - 1);
                     const range: vscode.Range = new vscode.Range(startPos, endPos);
-                    const comments: PullRequesetComment[] = this.getCommentsForThread(thread);
+                    const comments: PullRequestComment[] = this.getCommentsForThread(thread);
                     const commentThread: vscode.CommentThread | undefined =
                         this.commentController?.createCommentThread(rightEditor.document.uri, range, comments);
                     for (const comment of comments) {
@@ -297,33 +297,33 @@ export class DiffCommentService {
      * @returns
      * @memberof DiffCommentService
      */
-    private getCommentsForThread(thread: GitPullRequestCommentThread): PullRequesetComment[] {
-        const comments: PullRequesetComment[] = [];
+    private getCommentsForThread(thread: GitPullRequestCommentThread): PullRequestComment[] {
+        const comments: PullRequestComment[] = [];
         if (thread.comments && thread.id) {
             for (const comment of thread.comments) {
                 if (comment.id) {
                     if (comment.isDeleted) {
                         const authorName: string = comment.author?.displayName ?? '';
                         const contextValue: string = '';
-                        const pullRequesetComment: PullRequesetComment = new PullRequesetComment(
+                        const pullRequestComment: PullRequestComment = new PullRequestComment(
                             comment,
                             thread.id,
                             comment.id,
-                            new vscode.MarkdownString('*Commment Deleted*'),
+                            new vscode.MarkdownString('*Comment Deleted*'),
                             vscode.CommentMode.Preview,
                             {
                                 name: authorName,
                             },
                             contextValue
                         );
-                        comments.push(pullRequesetComment);
+                        comments.push(pullRequestComment);
                     } else {
                         const authorName: string = comment.author?.displayName ?? '';
                         let contextValue: string = comment.author?.displayName === this.user.identity.DisplayName ? 'editable' : '';
                         contextValue += comment.usersLiked?.find(s => s.id === this.user.identity.TeamFoundationId) ? 'Unlike' : 'Like';
                         const markedDownText: vscode.MarkdownString = new vscode.MarkdownString(comment.content);
                         markedDownText.isTrusted = true;
-                        const pullRequesetComment: PullRequesetComment = new PullRequesetComment(
+                        const pullRequestComment: PullRequestComment = new PullRequestComment(
                             comment,
                             thread.id,
                             comment.id,
@@ -334,9 +334,9 @@ export class DiffCommentService {
                             },
                             contextValue
                         );
-                        pullRequesetComment.threadContext = thread.threadContext;
+                        pullRequestComment.threadContext = thread.threadContext;
 
-                        comments.push(pullRequesetComment);
+                        comments.push(pullRequestComment);
                     }
                 }
             }
