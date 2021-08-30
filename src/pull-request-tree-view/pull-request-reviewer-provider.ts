@@ -141,10 +141,10 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             return policyTreeItems;
         }
 
-        if (element.label === 'Reviewers') {
+        if (element.label === 'Required Reviewers') {
             const reviewers: vscode.TreeItem[] = [];
             if (this.pullRequest.reviewers) {
-                for (const reviewer of this.pullRequest.reviewers) {
+                for (const reviewer of this.pullRequest.reviewers.filter(s => s.isRequired)) {
                     reviewers.push({
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
                         label: reviewer.displayName,
@@ -155,6 +155,22 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             }
             return reviewers;
         }
+
+        if (element.label === 'Optional Reviewers') {
+            const reviewers: vscode.TreeItem[] = [];
+            if (this.pullRequest.reviewers) {
+                for (const reviewer of this.pullRequest.reviewers.filter(s => !s.isRequired)) {
+                    reviewers.push({
+                        collapsibleState: vscode.TreeItemCollapsibleState.None,
+                        label: reviewer.displayName,
+                        description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote),
+                        iconPath: await this.avatarUtility.getProfilePicFromId(reviewer.id, reviewer.displayName)
+                    });
+                }
+            }
+            return reviewers;
+        }
+
 
         if (element.label === 'Commits') {
             const commitTreeItems: vscode.TreeItem[] = [];
@@ -1293,8 +1309,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         // Policies
         pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Policies'));
 
-        // Reviewers
-        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Reviewers'));
+        // Required Reviewers
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Required Reviewers'));
+
+        // Optional Reviewers
+        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Optional Reviewers'));
 
         // Commits
         pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Commits'));

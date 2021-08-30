@@ -10,8 +10,6 @@ It is actively being worked on and probably contains numerous bugs. Use at your 
 - View pull requests created in your Azure Devops Projects
 - Review pull requests, make comments and set a
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
 ## Requirements
 
 Must have access to an Azure Devops Organization and ability to create an access token.
