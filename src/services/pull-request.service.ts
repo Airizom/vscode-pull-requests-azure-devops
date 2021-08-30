@@ -635,7 +635,7 @@ export class PullRequestsService extends AzureDevopsService {
      */
     public async getPullRequest(pullRequestId: number): Promise<GitPullRequest> {
         if (this.gitApi && pullRequestId) {
-            return this.gitApi.getPullRequestById(pullRequestId);
+            return this.gitApi.getPullRequest(this.currentRepoName, pullRequestId, this.project, undefined, undefined, undefined, true, true);
         }
         return {};
     }
