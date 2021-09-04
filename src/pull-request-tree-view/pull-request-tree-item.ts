@@ -11,8 +11,6 @@ export class PullRequestTreeItem extends vscode.TreeItem {
         return '';
     }
 
-    // ContextValue = 'dependency';
-
     constructor(
         public pullRequest: GitPullRequest,
         public readonly command?: vscode.Command

@@ -8,7 +8,9 @@ It is actively being worked on and probably contains numerous bugs. Use at your 
 ## Features
 
 - View pull requests created in your Azure Devops Projects
-- Review pull requests, make comments and set a
+- Review pull requests, make comments
+- Add and remove reviewers
+- Set vote status
 
 ## Requirements
 

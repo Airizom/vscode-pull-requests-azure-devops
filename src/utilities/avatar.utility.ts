@@ -1,6 +1,6 @@
-import { PullRequestsService } from '../services/pull-request.service';
-import * as vscode from 'vscode';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
+import * as vscode from 'vscode';
+import { PullRequestsService } from '../services/pull-request.service';
 
 export class AvatarUtility {
 
@@ -31,10 +31,6 @@ export class AvatarUtility {
                 this.cachedAvatars.set(id, avatarValue);
                 return vscode.Uri.parse(`data:image/*;base64,${avatarValue}`);
             }
-        }
-
-        if (name) {
-            return vscode.Uri.parse(`https://ui-avatars.com/api/?name=${name}&background=5BA4C2&color=252B33&font-size=0.7`);
         }
 
         return new vscode.ThemeIcon('account');

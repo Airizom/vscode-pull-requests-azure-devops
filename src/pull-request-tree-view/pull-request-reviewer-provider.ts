@@ -10,6 +10,7 @@ import * as vscode from 'vscode';
 import { CommentTreeItem } from '../models/comment-tree-item';
 import { FileTreeItem } from '../models/file-tree-item';
 import { FolderTreeItem } from '../models/folder-tree-item';
+import { Identity } from '../models/identity-response.model';
 import { PullRequesetComment } from '../models/pull-request-comment.model';
 import { PullRequestVote } from '../models/pull-request-vote.model';
 import { DiffCommentService } from '../services/diff-comment.service';
@@ -46,6 +47,10 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private reactivateStatusCommand: vscode.Disposable | undefined;
     private likeCommentCommand: vscode.Disposable | undefined;
     private unlikeCommentCommand: vscode.Disposable | undefined;
+    private addRequiredReviewerCommand: vscode.Disposable | undefined;
+    private addOptionalReviewerCommand: vscode.Disposable | undefined;
+
+    private removeReviewerCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -146,6 +151,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (this.pullRequest.reviewers) {
                 for (const reviewer of this.pullRequest.reviewers.filter(s => s.isRequired)) {
                     reviewers.push({
+                        id: reviewer.id,
+                        contextValue: 'removeReviewer',
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
                         label: reviewer.displayName,
                         description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote),
@@ -161,6 +168,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (this.pullRequest.reviewers) {
                 for (const reviewer of this.pullRequest.reviewers.filter(s => !s.isRequired)) {
                     reviewers.push({
+                        id: reviewer.id,
+                        contextValue: 'removeReviewer',
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
                         label: reviewer.displayName,
                         description: PullRequestsProvider.getVoteText(reviewer.vote as PullRequestVote),
@@ -376,6 +385,39 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerReactivateStatus();
         this.registerLikeCommentCommand();
         this.registerUnlikeCommand();
+        this.registerAddRequiredReviewerCommand();
+        this.registerAddOptionalReviewerCommand();
+        this.registerRemoveReviewer();
+    }
+
+    public registerAddRequiredReviewerCommand() {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.addRequiredReviewer');
+            if (!command && !this.addRequiredReviewerCommand) {
+                this.addRequiredReviewerCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.addRequiredReviewer', this.onAddRequiredReviewer);
+            }
+        });
+    }
+
+    public registerAddOptionalReviewerCommand() {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.addOptionalReviewer');
+            if (!command && !this.addOptionalReviewerCommand) {
+                this.addOptionalReviewerCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.addOptionalReviewer', this.onAddOptionalReviewer);
+            }
+        });
+    }
+
+    public registerRemoveReviewer() {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.removeReviewer');
+            if (!command && !this.removeReviewerCommand) {
+                this.removeReviewerCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.removeReviewer', this.onRemoveReviewer);
+            }
+        });
     }
 
     /**
@@ -473,6 +515,13 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      */
     private static openLinkInBrowser(url: string): Thenable<{} | undefined> {
         return vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
+    }
+
+    private readonly onRemoveReviewer = async (...args: any[]) => {
+        if (this.pullRequest.pullRequestId) {
+            await this.pullRequestsService.removeReviewer(this.pullRequest.pullRequestId, args[0].id);
+        }
+        this._onDidChangeTreeData.fire();
     }
 
     /**
@@ -755,6 +804,41 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         });
     }
 
+    private readonly onAddRequiredReviewer = async (value: vscode.TreeItem): Promise<void> => {
+        await this.showAddReviewerPicker(true);
+    }
+
+    private readonly onAddOptionalReviewer = async (value: vscode.TreeItem): Promise<void> => {
+        await this.showAddReviewerPicker(false);
+    }
+
+    private async showAddReviewerPicker(isRequired: boolean = false): Promise<void> {
+        if (!this.pullRequest?.pullRequestId) {
+            return;
+        }
+        const allReviewers: Identity[] = await this.pullRequestsService.getPossiblePullRequestReviewers('', this.pullRequest?.pullRequestId);
+        const quickPick: vscode.QuickPick<vscode.QuickPickItem> = vscode.window.createQuickPick();
+        const names: vscode.QuickPickItem[] = allReviewers.map(s => ({
+            label: s.displayName ?? '',
+            id: s.localId ?? '',
+            detail: s.mail
+        }));
+        quickPick.items = names;
+        quickPick.onDidChangeValue(async value => {
+            await this.getListOfReviewers(quickPick, value);
+        });
+        quickPick.onDidChangeSelection(async selections => {
+            if (selections[0] && this.pullRequest?.pullRequestId) {
+                await this.pullRequestsService.addPullRequestReviewer((selections[0] as any).id, this.pullRequest.pullRequestId, isRequired);
+                this._onDidChangeTreeData.fire();
+                quickPick.value = '';
+                await this.getListOfReviewers(quickPick, '');
+            }
+        });
+
+        quickPick.show();
+    }
+
     private readonly onSubmitFirstComment = async (comment: vscode.CommentReply): Promise<void> => {
         if (!this.previousVersionDiffEditor || !this.changesetVersionDiffEditor) {
             return;
@@ -835,6 +919,18 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         const range: vscode.Range = new vscode.Range(currentEditor.selection.start, currentEditor.selection.end);
         this.diffCommentService.selectedRange = range;
         this.diffCommentService.createThread(currentEditor.document.uri, range);
+    }
+
+    private async getListOfReviewers(quickPick: vscode.QuickPick<vscode.QuickPickItem>, value: string) {
+        quickPick.busy = true;
+        const reviewers: Identity[] = await this.pullRequestsService.getPossiblePullRequestReviewers(value, this.pullRequest.pullRequestId!);
+        const names: vscode.QuickPickItem[] = reviewers.map(s => ({
+            label: s.displayName ?? '',
+            id: s.localId ?? '',
+            detail: s.mail
+        }));
+        quickPick.items = names;
+        quickPick.busy = false;
     }
 
     /**
@@ -1309,11 +1405,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         // Policies
         pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Policies'));
 
+        const requiredReviewersTreeItem: vscode.TreeItem = this.treeItemUtility.getBasicExpandedTreeItem('Required Reviewers');
+        requiredReviewersTreeItem.contextValue = 'addRequiredReviewer';
+
         // Required Reviewers
-        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Required Reviewers'));
+        pullRequestTreeItems.push(requiredReviewersTreeItem);
+
+        const optionalReviewersTreeItem: vscode.TreeItem = this.treeItemUtility.getBasicExpandedTreeItem('Optional Reviewers');
+        optionalReviewersTreeItem.contextValue = 'addOptionalReviewer';
 
         // Optional Reviewers
-        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Optional Reviewers'));
+        pullRequestTreeItems.push(optionalReviewersTreeItem);
 
         // Commits
         pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Commits'));

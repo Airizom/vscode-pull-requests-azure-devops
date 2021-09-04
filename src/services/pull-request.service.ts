@@ -1,12 +1,13 @@
 import { IGitApi } from 'azure-devops-node-api/GitApi';
 import { IHttpClientResponse } from 'azure-devops-node-api/interfaces/common/VsoBaseInterfaces';
-import { Comment, CommentThreadContext, CommentThreadStatus, FileDiff, FileDiffsCriteria, GitItem, GitPullRequest, GitPullRequestChange, GitPullRequestCommentThread, GitPullRequestIteration, GitPullRequestIterationChanges, GitPullRequestStatus, GitRepository, GitVersionOptions, GitVersionType, PullRequestStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
+import { Comment, CommentThreadContext, CommentThreadStatus, FileDiff, FileDiffsCriteria, GitItem, GitPullRequest, GitPullRequestChange, GitPullRequestCommentThread, GitPullRequestIteration, GitPullRequestIterationChanges, GitPullRequestStatus, GitRepository, GitVersionOptions, GitVersionType, IdentityRefWithVote, PullRequestStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
 import { WorkItem, WorkItemErrorPolicy, WorkItemExpand, WorkItemType } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
 import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
 import * as vscode from 'vscode';
+import { Identity, IdentityResponse } from '../models/identity-response.model';
 import { PullRequestVote } from '../models/pull-request-vote.model';
 import { ConfigManager } from '../utilities/config-manager';
 import { AzureDevopsService } from './azure-devops.service';
@@ -721,6 +722,76 @@ export class PullRequestsService extends AzureDevopsService {
      */
     public async getListOfRepositories(): Promise<GitRepository[] | undefined> {
         return this.gitApi?.getRepositories(this.project);
+    }
+
+    /**
+     * Get all pull request reviewers for a give pull request.
+     *
+     * @param {number} pullRequestId
+     * @returns {Promise<IdentityRefWithVote[]>}
+     * @memberof PullRequestsService
+     */
+    public async getPossiblePullRequestReviewers(searchValue: string, pullRequestId: number): Promise<Identity[]> {
+        const statusCodeOk: number = 200;
+        const currentReviewers: IdentityRefWithVote[] = await this.gitApi?.getPullRequestReviewers(
+            this.currentRepoName,
+            pullRequestId,
+            this.project
+        ) ?? [];
+        if (searchValue) {
+            const requestUrl: string = `${this.connection?.serverUrl}/_apis/IdentityPicker/Identities/?api-version=5.1-preview`;
+            const response: IHttpClientResponse | undefined = await this.connection?.rest.client.post(
+                requestUrl, JSON.stringify({ 'query': searchValue, 'identityTypes': ['user'], 'operationScopes': ['ims', 'source'], 'options': { 'MinResults': 5, 'MaxResults': 40 }, 'properties': ['DisplayName', 'IsMru', 'ScopeName', 'SamAccountName', 'Active', 'SubjectDescriptor', 'Department', 'JobTitle', 'Mail', 'MailNickname', 'PhysicalDeliveryOfficeName', 'SignInAddress', 'Surname', 'Guest', 'TelephoneNumber', 'Manager', 'Description'] }), { 'Content-Type': 'application/json' });
+            if (response?.message.statusCode === statusCodeOk) {
+                const body: string = await response.readBody();
+                const identityResponse: IdentityResponse = JSON.parse(body);
+                return identityResponse?.results?.[0].identities?.filter(s => !currentReviewers.some(e => e.displayName === s.displayName)) ?? [];
+            }
+        } else {
+            const requestUrl: string = `${this.connection?.serverUrl}/_apis/IdentityPicker/Identities/me/mru/common?operationScopes=ims&properties=DisplayName&properties=IsMru&properties=ScopeName&properties=SamAccountName&properties=Active&properties=SubjectDescriptor&properties=Department&properties=JobTitle&properties=Mail&properties=MailNickname&properties=PhysicalDeliveryOfficeName&properties=SignInAddress&properties=Surname&properties=Guest&properties=TelephoneNumber&properties=Manager&properties=Description&api-version=5.1-preview`;
+            const response: IHttpClientResponse | undefined = await this.connection?.rest.client.get(
+                requestUrl
+            );
+            if (response?.message.statusCode === statusCodeOk) {
+                const body: string = await response.readBody();
+                const identityResponse: Identity[] = JSON.parse(body)?.mruIdentities;
+                return identityResponse?.filter(s => !currentReviewers.some(e => e.displayName === s.displayName)) ?? [];
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Remove a reviewer from a pull request.
+     *
+     * @param {number} pullRequestId
+     * @param {string} reviewerId
+     * @returns {Promise<any>}
+     * @memberof PullRequestsService
+     */
+    public async removeReviewer(pullRequestId: number, reviewerId: string): Promise<any> {
+        return this.gitApi?.deletePullRequestReviewer(this.currentRepoName, pullRequestId, reviewerId, this.project);
+    }
+
+    /**
+     * Add a reviewer to a pull request or cast a vote
+     *
+     * @param {IdentityRefWithVote} reviewer
+     * @param {number} pullRequestId
+     * @returns {(Promise<IdentityRefWithVote | undefined>)}
+     * @memberof PullRequestsService
+     */
+    public async addPullRequestReviewer(reviewerId: string, pullRequestId: number, isRequired: boolean = false): Promise<IdentityRefWithVote | undefined> {
+        if (!reviewerId) {
+            return undefined;
+        }
+
+        const reviewer: IdentityRefWithVote = {
+            id: reviewerId,
+            isRequired
+        };
+
+        return this.gitApi?.createPullRequestReviewer(reviewer, this.currentRepoName, pullRequestId, reviewerId, this.project);
     }
 
     /**

@@ -8,7 +8,7 @@
         "url": "https://github.com/Airizom/vscode-pull-requests-azure-devops.git"
     },
     "icon": "pull-request-icon.png",
-    "version": "0.0.17",
+    "version": "0.0.18",
     "engines": {
         "vscode": "^1.44.0"
     },
@@ -48,13 +48,16 @@
             }
         },
         "viewsContainers": {
-            "activitybar": [{
-                "id": "pullRequestReviewer",
-                "title": "Pull Request",
-                "icon": "src/assets/images/code-review.svg"
-            }]
+            "activitybar": [
+                {
+                    "id": "pullRequestReviewer",
+                    "title": "Pull Request",
+                    "icon": "src/assets/images/code-review.svg"
+                }
+            ]
         },
-        "commands": [{
+        "commands": [
+            {
                 "command": "pullRequestReviewPanel.resolve",
                 "title": "Resolve"
             },
@@ -118,6 +121,21 @@
                 "icon": "$(edit)"
             },
             {
+                "command": "pullRequestReviewPanel.addRequiredReviewer",
+                "title": "Add Required Reviewer",
+                "icon": "$(add)"
+            },
+            {
+                "command": "pullRequestReviewPanel.removeReviewer",
+                "title": "Remove Reviewer",
+                "icon": "$(x)"
+            },
+            {
+                "command": "pullRequestReviewPanel.addOptionalReviewer",
+                "title": "Add Optional Reviewer",
+                "icon": "$(add)"
+            },
+            {
                 "command": "pullRequestReviewPanel.approve",
                 "title": "Approve",
                 "category": "setFeedback"
@@ -139,22 +157,29 @@
             }
         ],
         "views": {
-            "scm": [{
-                "id": "pullRequestsExplorer",
-                "name": "Pull Requests"
-            }],
-            "pullRequestReviewer": [{
-                "id": "pullRequestReviewPanel",
-                "name": "Review"
-            }]
+            "scm": [
+                {
+                    "id": "pullRequestsExplorer",
+                    "name": "Pull Requests"
+                }
+            ],
+            "pullRequestReviewer": [
+                {
+                    "id": "pullRequestReviewPanel",
+                    "name": "Review"
+                }
+            ]
         },
         "menus": {
-            "editor/context": [{
-                "command": "pullRequestReviewPanel.createThread",
-                "group": "navigation",
-                "when": "editorHasSelection && isPullRequest"
-            }],
-            "comments/commentThread/context": [{
+            "editor/context": [
+                {
+                    "command": "pullRequestReviewPanel.createThread",
+                    "group": "navigation",
+                    "when": "editorHasSelection && isPullRequest"
+                }
+            ],
+            "comments/commentThread/context": [
+                {
                     "command": "pullRequestReviewPanel.submitFirstThreadComment",
                     "group": "inline",
                     "when": "commentThreadIsEmpty"
@@ -165,7 +190,8 @@
                     "when": "!commentThreadIsEmpty"
                 }
             ],
-            "comments/comment/title": [{
+            "comments/comment/title": [
+                {
                     "command": "pullRequestReviewPanel.edit",
                     "group": "inline@1",
                     "when": "comment =~ /editable/"
@@ -186,12 +212,15 @@
                     "when": "comment =~ /Unlike/"
                 }
             ],
-            "comments/comment/context": [{
-                "command": "pullRequestReviewPanel.updateComment",
-                "group": "inline",
-                "when": "!commentThreadIsEmpty"
-            }],
-            "comments/commentThread/title": [{
+            "comments/comment/context": [
+                {
+                    "command": "pullRequestReviewPanel.updateComment",
+                    "group": "inline",
+                    "when": "!commentThreadIsEmpty"
+                }
+            ],
+            "comments/commentThread/title": [
+                {
                     "command": "pullRequestReviewPanel.resolve",
                     "group": "navigation",
                     "when": "!commentThreadIsEmpty && commentThread == 1"
@@ -203,8 +232,25 @@
                 }
             ],
             "explorer/context": [],
-            "view/item/context": [],
-            "view/title": [{
+            "view/item/context": [
+                {
+                    "command": "pullRequestReviewPanel.addRequiredReviewer",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == addRequiredReviewer"
+                },
+                {
+                    "command": "pullRequestReviewPanel.addOptionalReviewer",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == addOptionalReviewer"
+                },
+                {
+                    "command": "pullRequestReviewPanel.removeReviewer",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == removeReviewer"
+                }
+            ],
+            "view/title": [
+                {
                     "command": "pullRequestReviewPanel.approve",
                     "when": "view == pullRequestReviewPanel",
                     "group": "setFeedback"
