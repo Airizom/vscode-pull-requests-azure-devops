@@ -132,7 +132,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 }
                 return workItemTreeItems || [];
             }
-            return [];
+            return [
+                {
+                    label: 'No work items'
+                }
+            ];
         }
 
         if (element.label === 'Policies') {
@@ -183,7 +187,6 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             }
             return reviewers;
         }
-
 
         if (element.label === 'Commits') {
             const commitTreeItems: vscode.TreeItem[] = [];
@@ -1419,14 +1422,18 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         pullRequestTreeItems.push(this.treeItemUtility.getBranchesToMergeTreeItem(sourceRefName, targetRefName));
 
         const pullRequestTitle: string = `${this.pullRequest.pullRequestId} - ${this.pullRequest.title}`;
+
         // Title
         pullRequestTreeItems.push(this.treeItemUtility.createPullRequestTitleTreeItem(pullRequestTitle));
 
         // Description
         pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Description'));
 
+        const workItemsTreeItem: vscode.TreeItem = this.treeItemUtility.getBasicExpandedTreeItem('Work Items');
+        workItemsTreeItem.contextValue = 'addWorkItem';
+
         // Work Items
-        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Work Items'));
+        pullRequestTreeItems.push(workItemsTreeItem);
 
         // Policies
         pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Policies'));
