@@ -1,6 +1,6 @@
 import { GitPullRequestCommentThread } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import * as vscode from 'vscode';
-import { PullRequesetComment as PullRequestComment } from '../models/pull-request-comment.model';
+import { PullRequestComment as PullRequestComment } from '../models/pull-request-comment.model';
 
 export class DiffCommentService {
 
