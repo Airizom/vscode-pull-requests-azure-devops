@@ -49,7 +49,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private unlikeCommentCommand: vscode.Disposable | undefined;
     private addRequiredReviewerCommand: vscode.Disposable | undefined;
     private addOptionalReviewerCommand: vscode.Disposable | undefined;
-
+    private refreshCommand: vscode.Disposable | undefined;
     private removeReviewerCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
@@ -91,7 +91,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         if (!element) {
             if (this.pullRequest.pullRequestId) {
                 this.pullRequest = await this.pullRequestsService.getPullRequest(this.pullRequest.pullRequestId);
-                return this.createPullRequestReviewTree(this.pullRequest?.createdBy?.displayName, this.pullRequest.status ?? PullRequestStatus.NotSet);
+                return this.createPullRequestReviewTree(
+                    this.pullRequest?.createdBy?.displayName,
+                    this.pullRequest.status ?? PullRequestStatus.NotSet,
+                    this.pullRequest.isDraft ?? false
+                );
             }
             return [];
         }
@@ -388,6 +392,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerAddRequiredReviewerCommand();
         this.registerAddOptionalReviewerCommand();
         this.registerRemoveReviewer();
+        this.registerRefreshViewCommand();
     }
 
     public registerAddRequiredReviewerCommand() {
@@ -419,6 +424,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             }
         });
     }
+
+    public registerRefreshViewCommand() {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.refresh');
+            if (!command && !this.refreshCommand) {
+                this.refreshCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.refresh', this.onRefreshView);
+            }
+        });
+    }
+
 
     /**
      * Dispose of all commands
@@ -810,6 +826,10 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
     private readonly onAddOptionalReviewer = async (value: vscode.TreeItem): Promise<void> => {
         await this.showAddReviewerPicker(false);
+    }
+
+    private readonly onRefreshView = async (value: vscode.TreeItem): Promise<void> => {
+        this._onDidChangeTreeData.fire();
     }
 
     private async showAddReviewerPicker(isRequired: boolean = false): Promise<void> {
@@ -1377,14 +1397,20 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * @returns {Promise<vscode.TreeItem[]>}
      * @memberof CodeReviewerProvider
      */
-    private async createPullRequestReviewTree(userName: string = '', status: PullRequestStatus): Promise<vscode.TreeItem[]> {
+    private async createPullRequestReviewTree(userName: string = '', status: PullRequestStatus, isDraft: boolean): Promise<vscode.TreeItem[]> {
         const pullRequestTreeItems: vscode.TreeItem[] = [];
 
-        const label: string = `${userName} - ${PullRequestStatus[status]}`;
+        const label: string = `${userName}`;
+        const pullRequestStatus: string = isDraft ? 'Draft' : `${PullRequestStatus[status]}`;
         const userId: string = this.pullRequest?.createdBy?.id as string;
 
         // User
-        pullRequestTreeItems.push(await this.treeItemUtility.getCreatedByStatusTreeItem(label, userId, this.pullRequest.createdBy?.displayName));
+        pullRequestTreeItems.push(await this.treeItemUtility.getCreatedByStatusTreeItem(
+            label,
+            userId,
+            pullRequestStatus,
+            this.pullRequest.createdBy?.displayName
+        ));
 
         const sourceRefName: string = this.pullRequest.sourceRefName ?? '';
         const targetRefName: string = this.pullRequest.targetRefName ?? '';
