@@ -1,9 +1,13 @@
-import * as vscode from 'vscode';
 import { GitPullRequestChange } from 'azure-devops-node-api/interfaces/GitInterfaces';
+import * as vscode from 'vscode';
 
 export class FileTreeItem extends vscode.TreeItem {
     public get iconPath(): vscode.ThemeIcon {
         return vscode.ThemeIcon.File;
+    }
+
+    public get resourceUri(): vscode.Uri {
+        return vscode.Uri.file(this.path);
     }
 
     constructor(
