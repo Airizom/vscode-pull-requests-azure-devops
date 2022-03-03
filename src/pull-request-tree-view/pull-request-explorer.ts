@@ -47,12 +47,12 @@ export class PullRequestExplorer {
      */
     private setRefreshCommand(): void {
         vscode.commands.registerCommand('pullRequestsExplorer.refresh', async () => {
-            this.treeDataProvider?._onDidChangeTreeData.fire();
+            this.treeDataProvider?._onDidChangeTreeData.fire({});
         });
         vscode.commands.registerCommand('pullRequestsExplorer.edit', async () => {
             await this.configManager.showRepositorySelectionPicker();
             this.pullRequestsService.currentRepoName = this.configManager.repo;
-            this.treeDataProvider?._onDidChangeTreeData.fire();
+            this.treeDataProvider?._onDidChangeTreeData.fire({});
         });
     }
 
