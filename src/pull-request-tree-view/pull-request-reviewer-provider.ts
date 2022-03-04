@@ -524,7 +524,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         if (this.pullRequest.pullRequestId) {
             await this.pullRequestsService.removeReviewer(this.pullRequest.pullRequestId, args[0].id);
         }
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     /**
@@ -835,7 +835,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     }
 
     private readonly onRefreshView = async (value: vscode.TreeItem): Promise<void> => {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     private async showAddReviewerPicker(isRequired: boolean = false): Promise<void> {
@@ -856,7 +856,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         quickPick.onDidChangeSelection(async selections => {
             if (selections[0] && this.pullRequest?.pullRequestId) {
                 await this.pullRequestsService.addPullRequestReviewer((selections[0] as any).id, this.pullRequest.pullRequestId, isRequired);
-                this._onDidChangeTreeData.fire();
+                this._onDidChangeTreeData.fire(undefined);
                 quickPick.value = '';
                 await this.getListOfReviewers(quickPick, '');
             }
