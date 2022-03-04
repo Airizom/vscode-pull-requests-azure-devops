@@ -72,6 +72,15 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     }
 
     /**
+     * Refresh the entire pull request view.
+     *
+     * @memberof PullRequestReviewerTreeProvider
+     */
+    public refreshPullRequestTree(): void {
+        this._onDidChangeTreeData.fire(undefined);
+    }
+
+    /**
      * Return the element with modifying it
      *
      * @param {vscode.TreeItem} element
@@ -156,6 +165,12 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     });
                 }
             }
+
+            if (policyTreeItems.length === 0) {
+                policyTreeItems.push({
+                    label: 'No policies'
+                });
+            }
             return policyTreeItems;
         }
 
@@ -173,6 +188,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     });
                 }
             }
+            if (reviewers.length === 0) {
+                reviewers.push({
+                    label: 'No required reviewers'
+                });
+            }
             return reviewers;
         }
 
@@ -189,6 +209,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         iconPath: await this.avatarUtility.getProfilePicFromId(reviewer.id, reviewer.displayName)
                     });
                 }
+            }
+            if (reviewers.length === 0) {
+                reviewers.push({
+                    label: 'No optional reviewers'
+                });
             }
             return reviewers;
         }
@@ -230,6 +255,12 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         );
                     }
                 }
+            }
+
+            if (commentsTreeItems.length === 0) {
+                return [{
+                    label: 'No comments'
+                }];
             }
             return commentsTreeItems;
         }
@@ -538,7 +569,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         if (this.pullRequest.pullRequestId) {
             await this.pullRequestsService.removeReviewer(this.pullRequest.pullRequestId, args[0].id);
         }
-        this._onDidChangeTreeData.fire(undefined);
+        this.refreshPullRequestTree();
     }
 
     /**
@@ -788,7 +819,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                     await this.pullRequestsService.addWorkItem(this.pullRequest.artifactId, (workItem as any).id);
                     quickPick.dispose();
                     // Refresh the tree
-                    this._onDidChangeTreeData.fire(undefined);
+                    this.refreshPullRequestTree();
                 }
             });
             quickPick.show();
@@ -803,7 +834,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             const workItem: WorkItem = value as WorkItem;
             await this.pullRequestsService.removeWorkItem(workItem.id);
             // Refresh the tree
-            this._onDidChangeTreeData.fire(undefined);
+            this.refreshPullRequestTree();
         }
     }
 
@@ -870,7 +901,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     }
 
     private readonly onRefreshView = async (value: vscode.TreeItem): Promise<void> => {
-        this._onDidChangeTreeData.fire(undefined);
+        this.refreshPullRequestTree();
     }
 
     private async showAddReviewerPicker(isRequired: boolean = false): Promise<void> {
@@ -891,7 +922,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         quickPick.onDidChangeSelection(async selections => {
             if (selections[0] && this.pullRequest?.pullRequestId) {
                 await this.pullRequestsService.addPullRequestReviewer((selections[0] as any).id, this.pullRequest.pullRequestId, isRequired);
-                this._onDidChangeTreeData.fire(undefined);
+                this.refreshPullRequestTree();
                 quickPick.value = '';
                 await this.getListOfReviewers(quickPick, '');
             }
