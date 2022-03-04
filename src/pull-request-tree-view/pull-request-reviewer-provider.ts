@@ -53,6 +53,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private refreshCommand: vscode.Disposable | undefined;
     private removeReviewerCommand: vscode.Disposable | undefined;
     private addWorkItemCommand: vscode.Disposable | undefined;
+    private removeWorkItemCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -121,7 +122,9 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         const iconData: string = await this.pullRequestsService.getWorkItemIcon(workItem.fields['System.WorkItemType']);
                         const iconUri: vscode.Uri = vscode.Uri.parse(`data:image/svg+xml;base64,${iconData}`);
                         workItemTreeItems.push({
+                            id: workItem.id?.toString(),
                             label: workItem.fields['System.Title'],
+                            contextValue: 'removeWorkItem',
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
                             command: {
                                 title: '',
@@ -399,6 +402,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerRemoveReviewer();
         this.registerRefreshViewCommand();
         this.registerAddWorkItemCommand();
+        this.registerRemoveWorkItemCommand();
+    }
+
+    public registerRemoveWorkItemCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.removeWorkItem');
+            if (!command && !this.removeWorkItemCommand) {
+                this.removeWorkItemCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.removeWorkItem', this.onRemoveWorkItem);
+            }
+        });
     }
 
     public registerAddWorkItemCommand() {
@@ -781,6 +795,15 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
         } catch (error) {
             //
+        }
+    }
+
+    private readonly onRemoveWorkItem = async (value: vscode.TreeItem): Promise<void> => {
+        if (value.contextValue === 'removeWorkItem' && this.pullRequest?.artifactId && value.id) {
+            const workItem: WorkItem = value as WorkItem;
+            await this.pullRequestsService.removeWorkItem(workItem.id);
+            // Refresh the tree
+            this._onDidChangeTreeData.fire(undefined);
         }
     }
 

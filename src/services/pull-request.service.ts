@@ -836,6 +836,26 @@ export class PullRequestsService extends AzureDevopsService {
         throw new Error('Failed to add work item ' + response?.message?.statusCode);
     }
 
+    public async removeWorkItem(id: number | undefined): Promise<WorkItem> {
+        const response: IHttpClientResponse | undefined =
+            await this.connection?.rest.client.patch(`${this.collection}/_apis/wit/workItems/${id}?api-version=4.0-preview`,
+                JSON.stringify([
+                    {
+                        'op': 1,
+                        'path': '/relations/0',
+                    }
+                ]), { 'Content-Type': 'application/json-patch+json' });
+
+        const statusCodeOk: number = 200;
+        if (response?.message && response.message.statusCode === statusCodeOk) {
+            const body: string = await response.readBody();
+            const workItem: WorkItem = JSON.parse(body);
+            return workItem;
+        }
+
+        throw new Error('Failed to delete work item ' + response?.message?.statusCode);
+    }
+
 
     /**
      * Set up all properties used for making a azure devops api requests

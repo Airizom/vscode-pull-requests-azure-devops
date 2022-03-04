@@ -143,6 +143,11 @@
                 "icon": "$(add)"
             },
             {
+                "command": "pullRequestReviewPanel.removeWorkItem",
+                "title": "Remove Work Item",
+                "icon": "$(x)"
+            },
+            {
                 "command": "pullRequestReviewPanel.approve",
                 "title": "Approve",
                 "category": "setFeedback"
@@ -247,6 +252,11 @@
                     "command": "pullRequestReviewPanel.addWorkItem",
                     "group": "inline",
                     "when": "view == pullRequestReviewPanel && viewItem == addWorkItem"
+                },
+                {
+                    "command": "pullRequestReviewPanel.removeWorkItem",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == removeWorkItem"
                 }
             ],
             "view/title": [{
