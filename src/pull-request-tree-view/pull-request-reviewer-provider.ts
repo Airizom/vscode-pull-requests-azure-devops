@@ -757,20 +757,24 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private readonly onAddWorkItem = async (): Promise<void> => {
         try {
             const items: RecentWorkItem[] = await this.pullRequestsService.getWorkItemsForUser();
-            const quickPick = vscode.window.createQuickPick();
-            quickPick.items = items.map(s => {
-                return {
-                    label: s.title,
-                    description: s.assignedTo?.name ?? '',
-                    detail: s.workItemType,
-                    id: s.id
-                };
-            });
+            // Filter out the work items that are already in the pull request
+            const filteredItems: RecentWorkItem[] = this.pullRequest.workItemRefs?.length ?
+                items.filter((item: RecentWorkItem) => this.pullRequest.workItemRefs?.findIndex(workItem => workItem?.id === item.id.toString()) === -1) :
+                items;
+            const quickPick: vscode.QuickPick<vscode.QuickPickItem> = vscode.window.createQuickPick();
+            quickPick.items = filteredItems.map(s => ({
+                label: s.title,
+                description: s.assignedTo?.name ?? '',
+                detail: s.workItemType,
+                id: s.id
+            }));
             quickPick.onDidChangeSelection(async selections => {
                 if (selections?.[0] && this.pullRequest?.artifactId) {
                     const workItem: vscode.QuickPickItem = selections[0];
                     await this.pullRequestsService.addWorkItem(this.pullRequest.artifactId, (workItem as any).id);
                     quickPick.dispose();
+                    // Refresh the tree
+                    this._onDidChangeTreeData.fire(undefined);
                 }
             });
             quickPick.show();

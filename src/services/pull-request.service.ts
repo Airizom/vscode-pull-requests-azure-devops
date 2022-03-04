@@ -808,7 +808,7 @@ export class PullRequestsService extends AzureDevopsService {
         return [];
     }
 
-    public async addWorkItem(artifactId: string, id: any): Promise<WorkItem> {
+    public async addWorkItem(artifactId: string, id: number): Promise<WorkItem> {
         const response: IHttpClientResponse | undefined =
             await this.connection?.rest.client.patch(`${this.collection}/_apis/wit/workItems/${id}?api-version=4.0-preview`,
                 JSON.stringify([
