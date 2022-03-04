@@ -762,8 +762,16 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 return {
                     label: s.title,
                     description: s.assignedTo?.name ?? '',
-                    detail: s.workItemType
+                    detail: s.workItemType,
+                    id: s.id
                 };
+            });
+            quickPick.onDidChangeSelection(async selections => {
+                if (selections?.[0] && this.pullRequest?.artifactId) {
+                    const workItem: vscode.QuickPickItem = selections[0];
+                    await this.pullRequestsService.addWorkItem(this.pullRequest.artifactId, (workItem as any).id);
+                    quickPick.dispose();
+                }
             });
             quickPick.show();
 
