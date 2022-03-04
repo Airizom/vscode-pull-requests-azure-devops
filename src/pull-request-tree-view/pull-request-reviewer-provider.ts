@@ -13,6 +13,7 @@ import { FolderTreeItem } from '../models/folder-tree-item';
 import { Identity } from '../models/identity-response.model';
 import { PullRequestComment } from '../models/pull-request-comment.model';
 import { PullRequestVote } from '../models/pull-request-vote.model';
+import { RecentWorkItem } from '../models/recent-work-item-response.model';
 import { DiffCommentService } from '../services/diff-comment.service';
 import { PullRequestsService } from '../services/pull-request.service';
 import { AvatarUtility } from '../utilities/avatar.utility';
@@ -51,6 +52,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private addOptionalReviewerCommand: vscode.Disposable | undefined;
     private refreshCommand: vscode.Disposable | undefined;
     private removeReviewerCommand: vscode.Disposable | undefined;
+    private addWorkItemCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -396,6 +398,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerAddOptionalReviewerCommand();
         this.registerRemoveReviewer();
         this.registerRefreshViewCommand();
+        this.registerAddWorkItemCommand();
+    }
+
+    public registerAddWorkItemCommand() {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.addWorkItem');
+            if (!command && !this.addWorkItemCommand) {
+                this.addWorkItemCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.addWorkItem', this.onAddWorkItem);
+            }
+        });
     }
 
     public registerAddRequiredReviewerCommand() {
@@ -466,6 +479,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.removeReviewerCommand?.dispose();
         this.addOptionalReviewerCommand?.dispose();
         this.refreshCommand?.dispose();
+        this.addWorkItemCommand?.dispose();
         this.diffCommentService.disposeEditorsAndThreads();
         await this.closeDiffEditors();
         this.setContextMenuToHaveAddCommentItem(false);
@@ -739,6 +753,25 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private readonly onUpdateComment = async (comment: PullRequestComment): Promise<void> => {
         await this.updateComment(comment);
     }
+
+    private readonly onAddWorkItem = async (): Promise<void> => {
+        try {
+            const items: RecentWorkItem[] = await this.pullRequestsService.getWorkItemsForUser();
+            const quickPick = vscode.window.createQuickPick();
+            quickPick.items = items.map(s => {
+                return {
+                    label: s.title,
+                    description: s.assignedTo?.name ?? '',
+                    detail: s.workItemType
+                };
+            });
+            quickPick.show();
+
+        } catch (error) {
+            //
+        }
+    }
+
 
     private readonly onUpdateStatus = async (thread: vscode.CommentThread): Promise<void> => {
         if (thread.contextValue && this.pullRequest.pullRequestId && thread.comments.length > 0) {
