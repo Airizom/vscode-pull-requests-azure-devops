@@ -9,6 +9,7 @@ import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi'
 import * as vscode from 'vscode';
 import { Identity, IdentityResponse } from '../models/identity-response.model';
 import { PullRequestVote } from '../models/pull-request-vote.model';
+import { RecentWorkItem, RecentWorkItemResponse } from '../models/recent-work-item-response.model';
 import { ConfigManager } from '../utilities/config-manager';
 import { AzureDevopsService } from './azure-devops.service';
 
@@ -793,6 +794,68 @@ export class PullRequestsService extends AzureDevopsService {
 
         return this.gitApi?.createPullRequestReviewer(reviewer, this.currentRepoName, pullRequestId, reviewerId, this.project);
     }
+
+    public async getWorkItemsForUser(): Promise<RecentWorkItem[]> {
+        const response: IHttpClientResponse | undefined =
+            await this.connection?.rest.client.get(`${this.collection}/_apis/work/accountMyWorkRecentActivity`, { 'Content-Type': 'application/json' });
+        const statusCodeOk: number = 200;
+        if (response?.message && response.message.statusCode === statusCodeOk) {
+            const body: string = await response.readBody();
+            const recentWorkItemResponse: RecentWorkItemResponse = JSON.parse(body);
+            return recentWorkItemResponse.value;
+        }
+
+        return [];
+    }
+
+    public async addWorkItem(artifactId: string, id: number): Promise<WorkItem> {
+        const response: IHttpClientResponse | undefined =
+            await this.connection?.rest.client.patch(`${this.collection}/_apis/wit/workItems/${id}?api-version=4.0-preview`,
+                JSON.stringify([
+                    {
+                        'op': 0,
+                        'path':
+                            '/relations/-',
+                        'value': {
+                            'attributes': {
+                                'name': 'Pull Request'
+                            },
+                            'rel': 'ArtifactLink',
+                            'url': artifactId
+                        }
+                    }
+                ]), { 'Content-Type': 'application/json-patch+json' });
+
+        const statusCodeOk: number = 200;
+        if (response?.message && response.message.statusCode === statusCodeOk) {
+            const body: string = await response.readBody();
+            const workItem: WorkItem = JSON.parse(body);
+            return workItem;
+        }
+
+        throw new Error('Failed to add work item ' + response?.message?.statusCode);
+    }
+
+    public async removeWorkItem(id: number | undefined): Promise<WorkItem> {
+        const response: IHttpClientResponse | undefined =
+            await this.connection?.rest.client.patch(`${this.collection}/_apis/wit/workItems/${id}?api-version=4.0-preview`,
+                JSON.stringify([
+                    {
+                        'op': 1,
+                        'path': '/relations/0',
+                    }
+                ]), { 'Content-Type': 'application/json-patch+json' });
+
+        const statusCodeOk: number = 200;
+        if (response?.message && response.message.statusCode === statusCodeOk) {
+            const body: string = await response.readBody();
+            const workItem: WorkItem = JSON.parse(body);
+            return workItem;
+        }
+
+        throw new Error('Failed to delete work item ' + response?.message?.statusCode);
+    }
+
 
     /**
      * Set up all properties used for making a azure devops api requests

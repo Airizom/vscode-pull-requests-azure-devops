@@ -11,8 +11,9 @@ import { CommentTreeItem } from '../models/comment-tree-item';
 import { FileTreeItem } from '../models/file-tree-item';
 import { FolderTreeItem } from '../models/folder-tree-item';
 import { Identity } from '../models/identity-response.model';
-import { PullRequesetComment } from '../models/pull-request-comment.model';
+import { PullRequestComment } from '../models/pull-request-comment.model';
 import { PullRequestVote } from '../models/pull-request-vote.model';
+import { RecentWorkItem } from '../models/recent-work-item-response.model';
 import { DiffCommentService } from '../services/diff-comment.service';
 import { PullRequestsService } from '../services/pull-request.service';
 import { AvatarUtility } from '../utilities/avatar.utility';
@@ -51,6 +52,8 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private addOptionalReviewerCommand: vscode.Disposable | undefined;
     private refreshCommand: vscode.Disposable | undefined;
     private removeReviewerCommand: vscode.Disposable | undefined;
+    private addWorkItemCommand: vscode.Disposable | undefined;
+    private removeWorkItemCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -119,7 +122,9 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                         const iconData: string = await this.pullRequestsService.getWorkItemIcon(workItem.fields['System.WorkItemType']);
                         const iconUri: vscode.Uri = vscode.Uri.parse(`data:image/svg+xml;base64,${iconData}`);
                         workItemTreeItems.push({
+                            id: workItem.id?.toString(),
                             label: workItem.fields['System.Title'],
+                            contextValue: 'removeWorkItem',
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
                             command: {
                                 title: '',
@@ -132,7 +137,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 }
                 return workItemTreeItems || [];
             }
-            return [];
+            return [
+                {
+                    label: 'No work items'
+                }
+            ];
         }
 
         if (element.label === 'Policies') {
@@ -183,7 +192,6 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             }
             return reviewers;
         }
-
 
         if (element.label === 'Commits') {
             const commitTreeItems: vscode.TreeItem[] = [];
@@ -393,6 +401,28 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerAddOptionalReviewerCommand();
         this.registerRemoveReviewer();
         this.registerRefreshViewCommand();
+        this.registerAddWorkItemCommand();
+        this.registerRemoveWorkItemCommand();
+    }
+
+    public registerRemoveWorkItemCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.removeWorkItem');
+            if (!command && !this.removeWorkItemCommand) {
+                this.removeWorkItemCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.removeWorkItem', this.onRemoveWorkItem);
+            }
+        });
+    }
+
+    public registerAddWorkItemCommand() {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.addWorkItem');
+            if (!command && !this.addWorkItemCommand) {
+                this.addWorkItemCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.addWorkItem', this.onAddWorkItem);
+            }
+        });
     }
 
     public registerAddRequiredReviewerCommand() {
@@ -442,57 +472,28 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * @memberof CodeReviewerProvider
      */
     public async disposeCommands(): Promise<void> {
-        if (this.completeCodeReviewCommand) {
-            this.completeCodeReviewCommand.dispose();
-        }
-        if (this.approveCommand) {
-            this.approveCommand.dispose();
-        }
-        if (this.approveWithSuggestionsCommand) {
-            this.approveWithSuggestionsCommand.dispose();
-        }
-        if (this.rejectCommand) {
-            this.rejectCommand.dispose();
-        }
-        if (this.openLinkCommand) {
-            this.openLinkCommand.dispose();
-        }
-        if (this.openDiffCommand) {
-            this.openDiffCommand.dispose();
-        }
-        if (this.replyCommand) {
-            this.replyCommand.dispose();
-        }
-        if (this.editCommand) {
-            this.editCommand.dispose();
-        }
-        if (this.updateCommentCommand) {
-            this.updateCommentCommand.dispose();
-        }
-        if (this.deleteCommentCommand) {
-            this.deleteCommentCommand.dispose();
-        }
-        if (this.createThreadCommand) {
-            this.createThreadCommand.dispose();
-        }
-        if (this.onDidChangeEditorCommand) {
-            this.onDidChangeEditorCommand.dispose();
-        }
-        if (this.submitFirstThreadCommentCommand) {
-            this.submitFirstThreadCommentCommand.dispose();
-        }
-        if (this.resolveStatusCommand) {
-            this.resolveStatusCommand.dispose();
-        }
-        if (this.reactivateStatusCommand) {
-            this.reactivateStatusCommand.dispose();
-        }
-        if (this.likeCommentCommand) {
-            this.likeCommentCommand.dispose();
-        }
-        if (this.unlikeCommentCommand) {
-            this.unlikeCommentCommand.dispose();
-        }
+        this.completeCodeReviewCommand?.dispose();
+        this.approveCommand?.dispose();
+        this.approveWithSuggestionsCommand?.dispose();
+        this.rejectCommand?.dispose();
+        this.openLinkCommand?.dispose();
+        this.openDiffCommand?.dispose();
+        this.replyCommand?.dispose();
+        this.editCommand?.dispose();
+        this.updateCommentCommand?.dispose();
+        this.deleteCommentCommand?.dispose();
+        this.createThreadCommand?.dispose();
+        this.onDidChangeEditorCommand?.dispose();
+        this.submitFirstThreadCommentCommand?.dispose();
+        this.resolveStatusCommand?.dispose();
+        this.reactivateStatusCommand?.dispose();
+        this.likeCommentCommand?.dispose();
+        this.unlikeCommentCommand?.dispose();
+        this.addRequiredReviewerCommand?.dispose();
+        this.removeReviewerCommand?.dispose();
+        this.addOptionalReviewerCommand?.dispose();
+        this.refreshCommand?.dispose();
+        this.addWorkItemCommand?.dispose();
         this.diffCommentService.disposeEditorsAndThreads();
         await this.closeDiffEditors();
         this.setContextMenuToHaveAddCommentItem(false);
@@ -537,7 +538,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         if (this.pullRequest.pullRequestId) {
             await this.pullRequestsService.removeReviewer(this.pullRequest.pullRequestId, args[0].id);
         }
-        this._onDidChangeTreeData.fire({});
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     /**
@@ -755,17 +756,57 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         await this.reply(reply);
     }
 
-    private readonly onDeleteComment = async (comment: PullRequesetComment): Promise<void> => {
+    private readonly onDeleteComment = async (comment: PullRequestComment): Promise<void> => {
         await this.deleteComment(comment);
     }
 
-    private readonly onEdit = async (comment: PullRequesetComment): Promise<void> => {
+    private readonly onEdit = async (comment: PullRequestComment): Promise<void> => {
         await this.enterCommentEditMode(comment);
     }
 
-    private readonly onUpdateComment = async (comment: PullRequesetComment): Promise<void> => {
+    private readonly onUpdateComment = async (comment: PullRequestComment): Promise<void> => {
         await this.updateComment(comment);
     }
+
+    private readonly onAddWorkItem = async (): Promise<void> => {
+        try {
+            const items: RecentWorkItem[] = await this.pullRequestsService.getWorkItemsForUser();
+            // Filter out the work items that are already in the pull request
+            const filteredItems: RecentWorkItem[] = this.pullRequest.workItemRefs?.length ?
+                items.filter((item: RecentWorkItem) => this.pullRequest.workItemRefs?.findIndex(workItem => workItem?.id === item.id.toString()) === -1) :
+                items;
+            const quickPick: vscode.QuickPick<vscode.QuickPickItem> = vscode.window.createQuickPick();
+            quickPick.items = filteredItems.map(s => ({
+                label: s.title,
+                description: s.assignedTo?.name ?? '',
+                detail: s.workItemType,
+                id: s.id
+            }));
+            quickPick.onDidChangeSelection(async selections => {
+                if (selections?.[0] && this.pullRequest?.artifactId) {
+                    const workItem: vscode.QuickPickItem = selections[0];
+                    await this.pullRequestsService.addWorkItem(this.pullRequest.artifactId, (workItem as any).id);
+                    quickPick.dispose();
+                    // Refresh the tree
+                    this._onDidChangeTreeData.fire(undefined);
+                }
+            });
+            quickPick.show();
+
+        } catch (error) {
+            //
+        }
+    }
+
+    private readonly onRemoveWorkItem = async (value: vscode.TreeItem): Promise<void> => {
+        if (value.contextValue === 'removeWorkItem' && this.pullRequest?.artifactId && value.id) {
+            const workItem: WorkItem = value as WorkItem;
+            await this.pullRequestsService.removeWorkItem(workItem.id);
+            // Refresh the tree
+            this._onDidChangeTreeData.fire(undefined);
+        }
+    }
+
 
     private readonly onUpdateStatus = async (thread: vscode.CommentThread): Promise<void> => {
         if (thread.contextValue && this.pullRequest.pullRequestId && thread.comments.length > 0) {
@@ -773,20 +814,20 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (status === CommentThreadStatus.Active) {
                 await this.pullRequestsService.updateCommentStatus(CommentThreadStatus.Fixed,
                     this.pullRequest.pullRequestId,
-                    (thread.comments[0] as PullRequesetComment).threadId
+                    (thread.comments[0] as PullRequestComment).threadId
                 );
                 thread.contextValue = CommentThreadStatus.Fixed.toString();
             } else if (status === CommentThreadStatus.Fixed) {
                 await this.pullRequestsService.updateCommentStatus(CommentThreadStatus.Active,
                     this.pullRequest.pullRequestId,
-                    (thread.comments[0] as PullRequesetComment).threadId
+                    (thread.comments[0] as PullRequestComment).threadId
                 );
                 thread.contextValue = CommentThreadStatus.Active.toString();
             }
         }
     }
 
-    private readonly onLikeComment = async (comment: PullRequesetComment): Promise<void> => {
+    private readonly onLikeComment = async (comment: PullRequestComment): Promise<void> => {
         const thread: vscode.CommentThread | undefined = comment.parent;
 
         if (!thread || !comment.parent || !this.pullRequest.pullRequestId) {
@@ -795,7 +836,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
         await this.pullRequestsService.likeComment(this.pullRequest.pullRequestId, comment.threadId, comment.commentId);
         thread.comments = comment.parent.comments.map(cmt => {
-            if ((cmt as PullRequesetComment).commentId === comment.commentId) {
+            if ((cmt as PullRequestComment).commentId === comment.commentId) {
                 cmt.contextValue = comment.contextValue.replace('Like', 'Unlike');
             }
 
@@ -803,7 +844,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         });
     }
 
-    private readonly onUnlikeComment = async (comment: PullRequesetComment): Promise<void> => {
+    private readonly onUnlikeComment = async (comment: PullRequestComment): Promise<void> => {
         const thread: vscode.CommentThread | undefined = comment.parent;
 
         if (!thread || !comment.parent || !this.pullRequest.pullRequestId) {
@@ -812,7 +853,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
         await this.pullRequestsService.unlikeComment(this.pullRequest.pullRequestId, comment.threadId, comment.commentId);
         thread.comments = comment.parent.comments.map(cmt => {
-            if ((cmt as PullRequesetComment).commentId === comment.commentId) {
+            if ((cmt as PullRequestComment).commentId === comment.commentId) {
                 cmt.contextValue = comment.contextValue.replace('Unlike', 'Like');
             }
 
@@ -829,7 +870,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     }
 
     private readonly onRefreshView = async (value: vscode.TreeItem): Promise<void> => {
-        this._onDidChangeTreeData.fire({});
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     private async showAddReviewerPicker(isRequired: boolean = false): Promise<void> {
@@ -850,7 +891,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         quickPick.onDidChangeSelection(async selections => {
             if (selections[0] && this.pullRequest?.pullRequestId) {
                 await this.pullRequestsService.addPullRequestReviewer((selections[0] as any).id, this.pullRequest.pullRequestId, isRequired);
-                this._onDidChangeTreeData.fire({});
+                this._onDidChangeTreeData.fire(undefined);
                 quickPick.value = '';
                 await this.getListOfReviewers(quickPick, '');
             }
@@ -912,7 +953,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
         this.diffCommentService.selectedRange = undefined;
 
-        const newComment: PullRequesetComment = new PullRequesetComment(
+        const newComment: PullRequestComment = new PullRequestComment(
             responseComment,
             response.id,
             responseComment.id,
@@ -957,11 +998,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * Delete comment from the pull request thread on the server and locally.
      *
      * @private
-     * @param {PullRequesetComment} comment
+     * @param {PullRequestComment} comment
      * @returns {Promise<void>}
      * @memberof PullRequestReviewerTreeProvider
      */
-    private async deleteComment(comment: PullRequesetComment): Promise<void> {
+    private async deleteComment(comment: PullRequestComment): Promise<void> {
         const thread: vscode.CommentThread | undefined = comment.parent;
 
         if (!thread || !this.changesetVersionDiffEditor || !this.previousVersionDiffEditor) {
@@ -974,9 +1015,9 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             const commentDeletedMarkdownText: string = '*Comment Deleted*';
 
             thread.comments = thread.comments.map((value: vscode.Comment) => {
-                if ((value as PullRequesetComment).commentId === comment.commentId) {
+                if ((value as PullRequestComment).commentId === comment.commentId) {
                     const deletedMarkdownText: vscode.MarkdownString = new vscode.MarkdownString(commentDeletedMarkdownText);
-                    const deletedComment: PullRequesetComment = new PullRequesetComment(comment.originalComment,
+                    const deletedComment: PullRequestComment = new PullRequestComment(comment.originalComment,
                         comment.threadId,
                         comment.commentId,
                         deletedMarkdownText,
@@ -1004,11 +1045,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * Put comment in edit mode.
      *
      * @private
-     * @param {PullRequesetComment} comment
+     * @param {PullRequestComment} comment
      * @returns {Promise<void>}
      * @memberof PullRequestReviewerTreeProvider
      */
-    private async enterCommentEditMode(comment: PullRequesetComment): Promise<void> {
+    private async enterCommentEditMode(comment: PullRequestComment): Promise<void> {
         const thread: vscode.CommentThread | undefined = comment.parent;
 
         if (!thread || !comment.parent) {
@@ -1016,7 +1057,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         }
 
         thread.comments = comment.parent.comments.map(cmt => {
-            if ((cmt as PullRequesetComment).commentId === comment.commentId) {
+            if ((cmt as PullRequestComment).commentId === comment.commentId) {
                 cmt.mode = vscode.CommentMode.Editing;
             }
 
@@ -1028,11 +1069,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      * Update a comment on the server and locally
      *
      * @private
-     * @param {PullRequesetComment} comment
+     * @param {PullRequestComment} comment
      * @returns {Promise<void>}
      * @memberof PullRequestReviewerTreeProvider
      */
-    private async updateComment(comment: PullRequesetComment): Promise<void> {
+    private async updateComment(comment: PullRequestComment): Promise<void> {
         const thread: vscode.CommentThread | undefined = comment.parent;
 
         if (!thread || !this.changesetVersionDiffEditor || !this.previousVersionDiffEditor || !comment.body) {
@@ -1040,7 +1081,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         }
 
         if (this.pullRequest.pullRequestId) {
-            const commentToEdit: vscode.Comment | undefined = thread.comments.find(value => (value as PullRequesetComment).commentId === comment.commentId);
+            const commentToEdit: vscode.Comment | undefined = thread.comments.find(value => (value as PullRequestComment).commentId === comment.commentId);
 
             if (!commentToEdit) {
                 return;
@@ -1057,7 +1098,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
                 return;
             }
 
-            const commentToAdd: PullRequesetComment = new PullRequesetComment(
+            const commentToAdd: PullRequestComment = new PullRequestComment(
                 updateComment,
                 comment.threadId,
                 updateComment.id,
@@ -1071,7 +1112,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             commentToAdd.parent = comment.parent;
             commentToAdd.threadContext = comment.threadContext;
             thread.comments = thread.comments.map((value: vscode.Comment) => {
-                if ((value as PullRequesetComment).commentId === commentToAdd.commentId) {
+                if ((value as PullRequestComment).commentId === commentToAdd.commentId) {
                     return commentToAdd;
                 }
                 return value;
@@ -1091,11 +1132,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         const replyThread: vscode.CommentThread = reply.thread;
 
         if (this.pullRequest.pullRequestId) {
-            const threadId: number = (reply.thread.comments[0] as PullRequesetComment).threadId;
+            const threadId: number = (reply.thread.comments[0] as PullRequestComment).threadId;
             const newComment: Comment | undefined =
                 await this.pullRequestsService.replyToComment(reply.text, threadId, this.pullRequest.pullRequestId);
             if (newComment && newComment.id) {
-                const replyComment: PullRequesetComment = new PullRequesetComment(
+                const replyComment: PullRequestComment = new PullRequestComment(
                     newComment,
                     threadId,
                     newComment.id,
@@ -1419,14 +1460,18 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         pullRequestTreeItems.push(this.treeItemUtility.getBranchesToMergeTreeItem(sourceRefName, targetRefName));
 
         const pullRequestTitle: string = `${this.pullRequest.pullRequestId} - ${this.pullRequest.title}`;
+
         // Title
         pullRequestTreeItems.push(this.treeItemUtility.createPullRequestTitleTreeItem(pullRequestTitle));
 
         // Description
         pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Description'));
 
+        const workItemsTreeItem: vscode.TreeItem = this.treeItemUtility.getBasicExpandedTreeItem('Work Items');
+        workItemsTreeItem.contextValue = 'addWorkItem';
+
         // Work Items
-        pullRequestTreeItems.push(this.treeItemUtility.getBasicExpandedTreeItem('Work Items'));
+        pullRequestTreeItems.push(workItemsTreeItem);
 
         // Policies
         pullRequestTreeItems.push(this.treeItemUtility.getBasicCollapsedTreeItem('Policies'));

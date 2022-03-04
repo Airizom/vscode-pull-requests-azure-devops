@@ -1,7 +1,7 @@
-import { Comment, CommentReaction, MarkdownString, CommentMode, CommentAuthorInformation, CommentThread } from 'vscode';
-import { CommentThreadContext, Comment as GitComment } from 'azure-devops-node-api/interfaces/GitInterfaces';
+import { Comment as GitComment, CommentThreadContext } from 'azure-devops-node-api/interfaces/GitInterfaces';
+import { Comment, CommentAuthorInformation, CommentMode, CommentReaction, CommentThread, MarkdownString } from 'vscode';
 
-export class PullRequesetComment implements Comment {
+export class PullRequestComment implements Comment {
 
     public reactions?: CommentReaction[] | undefined;
     public label?: string | undefined;

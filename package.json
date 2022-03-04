@@ -8,7 +8,7 @@
         "url": "https://github.com/Airizom/vscode-pull-requests-azure-devops.git"
     },
     "icon": "pull-request-icon.png",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "engines": {
         "vscode": "^1.64.0"
     },
@@ -138,6 +138,16 @@
                 "icon": "$(add)"
             },
             {
+                "command": "pullRequestReviewPanel.addWorkItem",
+                "title": "Add Work Item",
+                "icon": "$(add)"
+            },
+            {
+                "command": "pullRequestReviewPanel.removeWorkItem",
+                "title": "Remove Work Item",
+                "icon": "$(x)"
+            },
+            {
                 "command": "pullRequestReviewPanel.approve",
                 "title": "Approve",
                 "category": "setFeedback"
@@ -237,6 +247,16 @@
                     "command": "pullRequestReviewPanel.removeReviewer",
                     "group": "inline",
                     "when": "view == pullRequestReviewPanel && viewItem == removeReviewer"
+                },
+                {
+                    "command": "pullRequestReviewPanel.addWorkItem",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == addWorkItem"
+                },
+                {
+                    "command": "pullRequestReviewPanel.removeWorkItem",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == removeWorkItem"
                 }
             ],
             "view/title": [{
@@ -292,7 +312,7 @@
         "vscode-test": "^1.6.1"
     },
     "dependencies": {
-        "azure-devops-node-api": "11.0.1",
+        "azure-devops-node-api": "11.1.1",
         "fs": "0.0.1-security",
         "lodash": "4.17.21",
         "minimist": "1.2.5",
