@@ -3,7 +3,7 @@ import { IHttpClientResponse } from 'azure-devops-node-api/interfaces/common/Vso
 import { Comment, CommentThreadContext, CommentThreadStatus, FileDiff, FileDiffsCriteria, GitItem, GitPullRequest, GitPullRequestChange, GitPullRequestCommentThread, GitPullRequestIteration, GitPullRequestIterationChanges, GitPullRequestStatus, GitRepository, GitVersionOptions, GitVersionType, IdentityRefWithVote, PullRequestStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
-import { WorkItem, WorkItemErrorPolicy, WorkItemExpand, WorkItemType } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
+import { Wiql, WorkItem, WorkItemErrorPolicy, WorkItemExpand, WorkItemQueryResult, WorkItemType } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
 import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
 import * as vscode from 'vscode';
@@ -32,6 +32,48 @@ export class PullRequestsService extends AzureDevopsService {
 
     constructor() {
         super();
+    }
+
+    /**
+     * Search for a work item based on the id
+     *
+     * @param {string} idOrSearchTerm
+     * @returns {Promise<WorkItem[]>}
+     * @memberof PullRequestsService
+     */
+    public async searchWorkItemsByIdOrTitle(idOrSearchTerm: string): Promise<WorkItem[]> {
+        if (!idOrSearchTerm) {
+            return [];
+        }
+        // Check if id is a number or search value
+        const isNumber: boolean = !isNaN(Number(idOrSearchTerm));
+
+        const workItemQuery: Wiql = isNumber ? {
+            query: `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.WorkItemType], [System.Tags] FROM WorkItems WHERE [System.Id] = ${idOrSearchTerm}`
+        } : {
+                query: `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.WorkItemType], [System.Tags] FROM WorkItems WHERE [System.Title] CONTAINS '${idOrSearchTerm}'`
+            };
+
+        const queryResult: WorkItemQueryResult | undefined = await this.workItemTrackingApi?.queryByWiql(workItemQuery);
+        if (queryResult) {
+            // Map list of workItem ids to array
+            const ids: number[] = [];
+            if (queryResult.workItems) {
+                queryResult.workItems.map((workItem: WorkItem) => {
+                    if (workItem.id) {
+                        ids.push(workItem.id);
+                    }
+                });
+            }
+            if (ids.length) {
+                // Get all the workItems from the rest api
+                const workItems: WorkItem[] = (await this.workItemTrackingApi?.getWorkItems(ids)) ?? [];
+                return workItems;
+            }
+            return [];
+        }
+
+        return [];
     }
 
     /**
@@ -426,13 +468,13 @@ export class PullRequestsService extends AzureDevopsService {
      * @memberof PullRequestsService
      */
     public async getAllPullRequestsForRepository(): Promise<GitPullRequest[]> {
-        return await this.gitApi?.getPullRequests(this.currentRepoName,
+        return (await this.gitApi?.getPullRequests(this.currentRepoName,
             {
                 includeLinks: true,
                 status: PullRequestStatus.All
             },
             this.project
-        ) ?? [];
+        )) ?? [];
     }
 
     /**
@@ -734,11 +776,11 @@ export class PullRequestsService extends AzureDevopsService {
      */
     public async getPossiblePullRequestReviewers(searchValue: string, pullRequestId: number): Promise<Identity[]> {
         const statusCodeOk: number = 200;
-        const currentReviewers: IdentityRefWithVote[] = await this.gitApi?.getPullRequestReviewers(
+        const currentReviewers: IdentityRefWithVote[] = (await this.gitApi?.getPullRequestReviewers(
             this.currentRepoName,
             pullRequestId,
             this.project
-        ) ?? [];
+        )) ?? [];
         if (searchValue) {
             const requestUrl: string = `${this.connection?.serverUrl}/_apis/IdentityPicker/Identities/?api-version=5.1-preview`;
             const response: IHttpClientResponse | undefined = await this.connection?.rest.client.post(

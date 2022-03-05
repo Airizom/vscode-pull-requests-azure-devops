@@ -8,7 +8,7 @@
         "url": "https://github.com/Airizom/vscode-pull-requests-azure-devops.git"
     },
     "icon": "pull-request-icon.png",
-    "version": "0.0.25",
+    "version": "0.0.26",
     "engines": {
         "vscode": "^1.64.0"
     },
@@ -143,6 +143,11 @@
                 "icon": "$(add)"
             },
             {
+                "command": "pullRequestReviewPanel.searchWorkItem",
+                "title": "Search Work Item",
+                "icon": "$(search)"
+            },
+            {
                 "command": "pullRequestReviewPanel.removeWorkItem",
                 "title": "Remove Work Item",
                 "icon": "$(x)"
@@ -250,6 +255,11 @@
                 },
                 {
                     "command": "pullRequestReviewPanel.addWorkItem",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == addWorkItem"
+                },
+                {
+                    "command": "pullRequestReviewPanel.searchWorkItem",
                     "group": "inline",
                     "when": "view == pullRequestReviewPanel && viewItem == addWorkItem"
                 },

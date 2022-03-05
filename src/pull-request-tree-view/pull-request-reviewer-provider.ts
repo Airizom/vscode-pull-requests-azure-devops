@@ -54,6 +54,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private removeReviewerCommand: vscode.Disposable | undefined;
     private addWorkItemCommand: vscode.Disposable | undefined;
     private removeWorkItemCommand: vscode.Disposable | undefined;
+    private searchWorkItemCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -434,6 +435,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerRefreshViewCommand();
         this.registerAddWorkItemCommand();
         this.registerRemoveWorkItemCommand();
+        this.registerSearchWorkItemCommand();
+    }
+
+    public registerSearchWorkItemCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.searchWorkItem');
+            if (!command && !this.searchWorkItemCommand) {
+                this.searchWorkItemCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.searchWorkItem', this.onSearchWorkItem);
+            }
+        });
     }
 
     public registerRemoveWorkItemCommand(): void {
@@ -570,6 +582,38 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             await this.pullRequestsService.removeReviewer(this.pullRequest.pullRequestId, args[0].id);
         }
         this.refreshPullRequestTree();
+    }
+
+    private readonly onSearchWorkItem = async (...args: any[]) => {
+        // Show the search work item dialog
+        // tslint:disable-next-line: await-promise
+        const value: string | undefined = await vscode.window.showInputBox({
+            prompt: 'Enter a work item id or search by text',
+            title: 'Search for work item',
+        });
+
+        if (!value) { return; }
+
+        const workItems: WorkItem[] = await this.pullRequestsService.searchWorkItemsByIdOrTitle(value);
+        // Show a selection list of work items
+        if (workItems.length > 0) {
+            // tslint:disable-next-line: await-promise
+            const selection = await vscode.window.showQuickPick(workItems.map((workItem: WorkItem) => ({
+                label: workItem.fields?.['System.Title'] ?? '',
+                description: workItem.fields?.['System.AssignedTo'] ?? '',
+                detail: workItem.fields?.['System.WorkItemType'] ?? '',
+                id: workItem.id
+            })), {
+                placeHolder: 'Select a work item',
+            });
+            // If a work item was selected, add it to the pull request
+            if (selection?.id && this.pullRequest?.artifactId) {
+                await this.pullRequestsService.addWorkItem(this.pullRequest.artifactId, selection.id);
+                this.refreshPullRequestTree();
+            }
+            return;
+        }
+        vscode.window.showErrorMessage('No work items found');
     }
 
     /**
