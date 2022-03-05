@@ -11,6 +11,7 @@ It is actively being worked on and probably contains numerous bugs. Use at your 
 - Review pull requests, make comments
 - Add and remove reviewers
 - Set vote status
+- Add/Remove Work Items
 
 ## Requirements
 
