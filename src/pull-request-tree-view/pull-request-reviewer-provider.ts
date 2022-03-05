@@ -54,6 +54,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private removeReviewerCommand: vscode.Disposable | undefined;
     private addWorkItemCommand: vscode.Disposable | undefined;
     private removeWorkItemCommand: vscode.Disposable | undefined;
+    private searchWorkItemCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -434,6 +435,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerRefreshViewCommand();
         this.registerAddWorkItemCommand();
         this.registerRemoveWorkItemCommand();
+        this.registerSearchWorkItemCommand();
+    }
+
+    public registerSearchWorkItemCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.searchWorkItem');
+            if (!command && !this.searchWorkItemCommand) {
+                this.searchWorkItemCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.searchWorkItem', this.onSearchWorkItem);
+            }
+        });
     }
 
     public registerRemoveWorkItemCommand(): void {
@@ -571,6 +583,19 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         }
         this.refreshPullRequestTree();
     }
+
+    private readonly onSearchWorkItem = (...args: any[]) => {
+        // Show the search work item dialog
+        vscode.window.showInputBox({
+            prompt: 'Enter a work item id or search by text',
+            title: 'Search for work item',
+        }).then(async (value: string | undefined) => {
+            if (value) {
+                //
+            }
+        });
+    }
+
 
     /**
      * Set a callback method to be fired when the user changes editors
