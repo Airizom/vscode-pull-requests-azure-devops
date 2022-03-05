@@ -37,17 +37,23 @@ export class PullRequestsService extends AzureDevopsService {
     /**
      * Search for a work item based on the id
      *
-     * @param {string} id
+     * @param {string} idOrSearchTerm
      * @returns {Promise<WorkItem[]>}
      * @memberof PullRequestsService
      */
-    public async searchWorkItemsById(id: string): Promise<WorkItem[]> {
-        if (!id) {
+    public async searchWorkItemsByIdOrTitle(idOrSearchTerm: string): Promise<WorkItem[]> {
+        if (!idOrSearchTerm) {
             return [];
         }
-        const workItemQuery: Wiql = {
-            query: `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.WorkItemType] FROM WorkItems WHERE [System.Id] = ${id}`
-        };
+        // Check if id is a number or search value
+        const isNumber: boolean = !isNaN(Number(idOrSearchTerm));
+
+        const workItemQuery: Wiql = isNumber ? {
+            query: `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.WorkItemType], [System.Tags] FROM WorkItems WHERE [System.Id] = ${idOrSearchTerm}`
+        } : {
+                query: `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.WorkItemType], [System.Tags] FROM WorkItems WHERE [System.Title] CONTAINS '${idOrSearchTerm}'`
+            };
+
         const queryResult: WorkItemQueryResult | undefined = await this.workItemTrackingApi?.queryByWiql(workItemQuery);
         if (queryResult) {
             // Map list of workItem ids to array
@@ -61,7 +67,7 @@ export class PullRequestsService extends AzureDevopsService {
             }
             if (ids.length) {
                 // Get all the workItems from the rest api
-                const workItems: WorkItem[] = await this.workItemTrackingApi?.getWorkItems(ids) ?? [];
+                const workItems: WorkItem[] = (await this.workItemTrackingApi?.getWorkItems(ids)) ?? [];
                 return workItems;
             }
             return [];
@@ -462,13 +468,13 @@ export class PullRequestsService extends AzureDevopsService {
      * @memberof PullRequestsService
      */
     public async getAllPullRequestsForRepository(): Promise<GitPullRequest[]> {
-        return await this.gitApi?.getPullRequests(this.currentRepoName,
+        return (await this.gitApi?.getPullRequests(this.currentRepoName,
             {
                 includeLinks: true,
                 status: PullRequestStatus.All
             },
             this.project
-        ) ?? [];
+        )) ?? [];
     }
 
     /**
@@ -770,11 +776,11 @@ export class PullRequestsService extends AzureDevopsService {
      */
     public async getPossiblePullRequestReviewers(searchValue: string, pullRequestId: number): Promise<Identity[]> {
         const statusCodeOk: number = 200;
-        const currentReviewers: IdentityRefWithVote[] = await this.gitApi?.getPullRequestReviewers(
+        const currentReviewers: IdentityRefWithVote[] = (await this.gitApi?.getPullRequestReviewers(
             this.currentRepoName,
             pullRequestId,
             this.project
-        ) ?? [];
+        )) ?? [];
         if (searchValue) {
             const requestUrl: string = `${this.connection?.serverUrl}/_apis/IdentityPicker/Identities/?api-version=5.1-preview`;
             const response: IHttpClientResponse | undefined = await this.connection?.rest.client.post(

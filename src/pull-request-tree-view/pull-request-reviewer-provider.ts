@@ -594,10 +594,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
         if (!value) { return; }
 
-        const workItemId: number = parseInt(value, 10);
-        if (isNaN(workItemId)) { return; }
-        // If the value is a number, search by id
-        const workItems: WorkItem[] = await this.pullRequestsService.searchWorkItemsById(value);
+        const workItems: WorkItem[] = await this.pullRequestsService.searchWorkItemsByIdOrTitle(value);
         // Show a selection list of work items
         if (workItems.length > 0) {
             // tslint:disable-next-line: await-promise
