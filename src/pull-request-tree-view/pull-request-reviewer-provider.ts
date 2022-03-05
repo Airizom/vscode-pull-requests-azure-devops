@@ -591,7 +591,26 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             title: 'Search for work item',
         }).then(async (value: string | undefined) => {
             if (value) {
-                //
+                const workItemId: number = parseInt(value, 10);
+                if (!isNaN(workItemId)) {
+                    // If the value is a number, search by id
+                    const workItems: WorkItem[] = await this.pullRequestsService.searchWorkItemsById(value);
+                    // Show a selection list of work items
+                    if (workItems.length > 0) {
+                        vscode.window.showQuickPick(workItems.map((workItem: WorkItem) => {
+                            return {
+                                label: workItem.fields?.['System.Title'] ?? '',
+                                description: workItem.fields?.['System.AssignedTo'] ?? '',
+                                detail: workItem.fields?.['System.WorkItemType'] ?? '',
+                                id: workItem.id
+                            };
+                        }), {
+                            placeHolder: 'Select a work item',
+                        });
+                    } else {
+                        vscode.window.showErrorMessage('No work items found');
+                    }
+                }
             }
         });
     }

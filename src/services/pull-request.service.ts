@@ -46,7 +46,7 @@ export class PullRequestsService extends AzureDevopsService {
             return [];
         }
         const workItemQuery: Wiql = {
-            query: `SELECT [System.Id], [System.Title], [System.State] FROM WorkItems WHERE [System.Id] = ${id}`
+            query: `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.WorkItemType] FROM WorkItems WHERE [System.Id] = ${id}`
         };
         const queryResult: WorkItemQueryResult | undefined = await this.workItemTrackingApi?.queryByWiql(workItemQuery);
         if (queryResult) {
