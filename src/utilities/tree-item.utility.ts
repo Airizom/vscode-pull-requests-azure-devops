@@ -22,7 +22,8 @@ export class TreeItemUtility {
             label: label,
             collapsibleState: vscode.TreeItemCollapsibleState.None,
             description: status,
-            iconPath: await this.avatarUtility.getProfilePicFromId(userId, name)
+            iconPath: await this.avatarUtility.getProfilePicFromId(userId, name),
+            contextValue: 'createdBy'
         };
     }
 

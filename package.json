@@ -171,6 +171,11 @@
                 "command": "pullRequestReviewPanel.reject",
                 "title": "Reject",
                 "category": "setFeedback"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatus",
+                "title": "Set Status",
+                "icon": "$(chevron-down)"
             }
         ],
         "views": {
@@ -267,6 +272,11 @@
                     "command": "pullRequestReviewPanel.removeWorkItem",
                     "group": "inline",
                     "when": "view == pullRequestReviewPanel && viewItem == removeWorkItem"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatus",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy"
                 }
             ],
             "view/title": [{
