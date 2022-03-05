@@ -3,7 +3,7 @@ import { IHttpClientResponse } from 'azure-devops-node-api/interfaces/common/Vso
 import { Comment, CommentThreadContext, CommentThreadStatus, FileDiff, FileDiffsCriteria, GitItem, GitPullRequest, GitPullRequestChange, GitPullRequestCommentThread, GitPullRequestIteration, GitPullRequestIterationChanges, GitPullRequestStatus, GitRepository, GitVersionOptions, GitVersionType, IdentityRefWithVote, PullRequestStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { PolicyEvaluationRecord } from 'azure-devops-node-api/interfaces/PolicyInterfaces';
 import { Profile } from 'azure-devops-node-api/interfaces/ProfileInterfaces';
-import { WorkItem, WorkItemErrorPolicy, WorkItemExpand, WorkItemType } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
+import { Wiql, WorkItem, WorkItemErrorPolicy, WorkItemExpand, WorkItemQueryResult, WorkItemType } from 'azure-devops-node-api/interfaces/WorkItemTrackingInterfaces';
 import { IPolicyApi } from 'azure-devops-node-api/PolicyApi';
 import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
 import * as vscode from 'vscode';
@@ -32,6 +32,42 @@ export class PullRequestsService extends AzureDevopsService {
 
     constructor() {
         super();
+    }
+
+    /**
+     * Search for a work item based on the id
+     *
+     * @param {string} id
+     * @returns {Promise<WorkItem[]>}
+     * @memberof PullRequestsService
+     */
+    public async searchWorkItemsById(id: string): Promise<WorkItem[]> {
+        if (!id) {
+            return [];
+        }
+        const workItemQuery: Wiql = {
+            query: `SELECT [System.Id], [System.Title], [System.State] FROM WorkItems WHERE [System.Id] = ${id}`
+        };
+        const queryResult: WorkItemQueryResult | undefined = await this.workItemTrackingApi?.queryByWiql(workItemQuery);
+        if (queryResult) {
+            // Map list of workItem ids to array
+            const ids: number[] = [];
+            if (queryResult.workItems) {
+                queryResult.workItems.map((workItem: WorkItem) => {
+                    if (workItem.id) {
+                        ids.push(workItem.id);
+                    }
+                });
+            }
+            if (ids.length) {
+                // Get all the workItems from the rest api
+                const workItems: WorkItem[] = await this.workItemTrackingApi?.getWorkItems(ids) ?? [];
+                return workItems;
+            }
+            return [];
+        }
+
+        return [];
     }
 
     /**
