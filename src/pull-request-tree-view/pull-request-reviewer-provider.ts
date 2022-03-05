@@ -584,37 +584,40 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.refreshPullRequestTree();
     }
 
-    private readonly onSearchWorkItem = (...args: any[]) => {
+    private readonly onSearchWorkItem = async (...args: any[]) => {
         // Show the search work item dialog
-        vscode.window.showInputBox({
+        // tslint:disable-next-line: await-promise
+        const value: string | undefined = await vscode.window.showInputBox({
             prompt: 'Enter a work item id or search by text',
             title: 'Search for work item',
-        }).then(async (value: string | undefined) => {
-            if (value) {
-                const workItemId: number = parseInt(value, 10);
-                if (!isNaN(workItemId)) {
-                    // If the value is a number, search by id
-                    const workItems: WorkItem[] = await this.pullRequestsService.searchWorkItemsById(value);
-                    // Show a selection list of work items
-                    if (workItems.length > 0) {
-                        vscode.window.showQuickPick(workItems.map((workItem: WorkItem) => {
-                            return {
-                                label: workItem.fields?.['System.Title'] ?? '',
-                                description: workItem.fields?.['System.AssignedTo'] ?? '',
-                                detail: workItem.fields?.['System.WorkItemType'] ?? '',
-                                id: workItem.id
-                            };
-                        }), {
-                            placeHolder: 'Select a work item',
-                        });
-                    } else {
-                        vscode.window.showErrorMessage('No work items found');
-                    }
-                }
-            }
         });
-    }
 
+        if (!value) { return; }
+
+        const workItemId: number = parseInt(value, 10);
+        if (isNaN(workItemId)) { return; }
+        // If the value is a number, search by id
+        const workItems: WorkItem[] = await this.pullRequestsService.searchWorkItemsById(value);
+        // Show a selection list of work items
+        if (workItems.length > 0) {
+            // tslint:disable-next-line: await-promise
+            const selection = await vscode.window.showQuickPick(workItems.map((workItem: WorkItem) => ({
+                label: workItem.fields?.['System.Title'] ?? '',
+                description: workItem.fields?.['System.AssignedTo'] ?? '',
+                detail: workItem.fields?.['System.WorkItemType'] ?? '',
+                id: workItem.id
+            })), {
+                placeHolder: 'Select a work item',
+            });
+            // If a work item was selected, add it to the pull request
+            if (selection?.id && this.pullRequest?.artifactId) {
+                await this.pullRequestsService.addWorkItem(this.pullRequest.artifactId, selection.id);
+                this.refreshPullRequestTree();
+            }
+            return;
+        }
+        vscode.window.showErrorMessage('No work items found');
+    }
 
     /**
      * Set a callback method to be fired when the user changes editors
