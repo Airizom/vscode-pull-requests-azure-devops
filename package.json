@@ -143,6 +143,11 @@
                 "icon": "$(add)"
             },
             {
+                "command": "pullRequestReviewPanel.searchWorkItem",
+                "title": "Search Work Item",
+                "icon": "$(search)"
+            },
+            {
                 "command": "pullRequestReviewPanel.removeWorkItem",
                 "title": "Remove Work Item",
                 "icon": "$(x)"
@@ -250,6 +255,11 @@
                 },
                 {
                     "command": "pullRequestReviewPanel.addWorkItem",
+                    "group": "inline",
+                    "when": "view == pullRequestReviewPanel && viewItem == addWorkItem"
+                },
+                {
+                    "command": "pullRequestReviewPanel.searchWorkItem",
                     "group": "inline",
                     "when": "view == pullRequestReviewPanel && viewItem == addWorkItem"
                 },
