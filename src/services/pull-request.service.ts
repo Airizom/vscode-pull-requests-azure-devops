@@ -271,6 +271,19 @@ export class PullRequestsService extends AzureDevopsService {
         throw new Error('Unable to set pull request status');
     }
 
+    public async markAsDraft(pullRequestId: number, isDraft: boolean): Promise<void> {
+        if (this.connection && this.repository && this.repository.id) {
+            const requestUrl: string = `${this.connection.serverUrl}/${this.repository.project?.id}/_apis/git/repositories/${this.repository.id}/pullRequests/${pullRequestId}/?api-version=5.0-preview.1`;
+            const response: IHttpClientResponse = await this.connection.rest.client.patch(requestUrl, JSON.stringify({ isDraft }), { 'Content-Type': 'application/json' });
+            const statusCodeOk: number = 200;
+            if (response.message && response.message.statusCode === statusCodeOk) {
+                const body: string = await response.readBody();
+                return JSON.parse(body);
+            }
+        }
+        throw new Error('Unable to set pull request status');
+    }
+
     /**
      * Get the statuses of a pull request
      *

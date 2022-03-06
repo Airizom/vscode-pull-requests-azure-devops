@@ -191,6 +191,11 @@
                 "command": "pullRequestReviewPanel.setStatusPublished",
                 "title": "Publish",
                 "icon": "$(arrow-up)"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusReactivated",
+                "title": "Reactivate",
+                "icon": "$(refresh)"
             }
         ],
         "views": {
@@ -290,22 +295,27 @@
                 },
                 {
                     "command": "pullRequestReviewPanel.setStatusComplete",
-                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest && !isAbandonedPullRequest",
                     "group": "inline"
                 },
                 {
                     "command": "pullRequestReviewPanel.setStatusDraft",
-                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest && !isAbandonedPullRequest",
                     "group": "inline"
                 },
                 {
                     "command": "pullRequestReviewPanel.setStatusAbandoned",
-                    "when": "view == pullRequestReviewPanel && viewItem == createdBy",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isAbandonedPullRequest",
                     "group": "inline"
                 },
                 {
                     "command": "pullRequestReviewPanel.setStatusPublished",
-                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && isDraftPullRequest",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && isDraftPullRequest && !isAbandonedPullRequest",
+                    "group": "inline"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusReactivated",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && isAbandonedPullRequest",
                     "group": "inline"
                 }
             ],

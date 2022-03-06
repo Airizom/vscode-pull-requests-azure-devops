@@ -30,6 +30,9 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
     public changesetVersionDiffEditor: vscode.TextEditor | undefined;
     public previousVersionDiffEditor: vscode.TextEditor | undefined;
+    reactivatePullRequestCommand: any;
+    markAsDraftPullRequestCommand: any;
+    publishPullRequestCommand: any;
 
     private completeCodeReviewCommand: vscode.Disposable | undefined;
     private approveCommand: vscode.Disposable | undefined;
@@ -55,7 +58,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private addWorkItemCommand: vscode.Disposable | undefined;
     private removeWorkItemCommand: vscode.Disposable | undefined;
     private searchWorkItemCommand: vscode.Disposable | undefined;
-    private setPullRequestStatusCommand: vscode.Disposable | undefined;
+    private abandonPullRequestCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -437,15 +440,48 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerAddWorkItemCommand();
         this.registerRemoveWorkItemCommand();
         this.registerSearchWorkItemCommand();
-        this.registerSetPullRequestStatusCommand();
+        this.registerAbandonPullRequestCommand();
+        this.registerReactivatePullRequestCommand();
+        this.registerMarkAsDraftPullRequestCommand();
+        this.registerPublishPullRequestCommand();
     }
 
-    public registerSetPullRequestStatusCommand(): void {
+    public registerAbandonPullRequestCommand(): void {
         vscode.commands.getCommands(true).then((value: string[]) => {
-            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setPullRequestStatus');
-            if (!command && !this.setPullRequestStatusCommand) {
-                this.setPullRequestStatusCommand =
-                    vscode.commands.registerCommand('pullRequestReviewPanel.setPullRequestStatus', this.onSetPullRequestStatus);
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusAbandoned');
+            if (!command && !this.abandonPullRequestCommand) {
+                this.abandonPullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusAbandoned', this.onAbandonPullRequest);
+            }
+        });
+    }
+
+    public registerReactivatePullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusReactivated');
+            if (!command && !this.reactivatePullRequestCommand) {
+                this.reactivatePullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusReactivated', this.onReactivatePullRequest);
+            }
+        });
+    }
+
+    public registerMarkAsDraftPullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusDraft');
+            if (!command && !this.markAsDraftPullRequestCommand) {
+                this.markAsDraftPullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusDraft', this.onMarkAsDraftPullRequest);
+            }
+        });
+    }
+
+    public registerPublishPullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusPublished');
+            if (!command && !this.publishPullRequestCommand) {
+                this.publishPullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusPublished', this.onPublishPullRequest);
             }
         });
     }
@@ -589,7 +625,15 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         return vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 
-    private readonly onSetPullRequestStatus = async (): Promise<void> => {
+    private readonly onAbandonPullRequest = async (): Promise<void> => {
+        if (!this.pullRequest?.pullRequestId) {
+            return;
+        }
+        await this.pullRequestsService.setPullRequestStatus(this.pullRequest.pullRequestId, PullRequestStatus.Abandoned);
+        this.refreshPullRequestTree();
+    }
+
+    private readonly onReactivatePullRequest = async (): Promise<void> => {
         if (!this.pullRequest?.pullRequestId) {
             return;
         }
@@ -597,10 +641,23 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.refreshPullRequestTree();
     }
 
-
     private readonly onRemoveReviewer = async (...args: any[]) => {
         if (this.pullRequest.pullRequestId) {
             await this.pullRequestsService.removeReviewer(this.pullRequest.pullRequestId, args[0].id);
+        }
+        this.refreshPullRequestTree();
+    }
+
+    private readonly onMarkAsDraftPullRequest = async (...args: any[]) => {
+        if (this.pullRequest.pullRequestId) {
+            await this.pullRequestsService.markAsDraft(this.pullRequest.pullRequestId, true);
+        }
+        this.refreshPullRequestTree();
+    }
+
+    private readonly onPublishPullRequest = async (...args: any[]) => {
+        if (this.pullRequest.pullRequestId) {
+            await this.pullRequestsService.markAsDraft(this.pullRequest.pullRequestId, false);
         }
         this.refreshPullRequestTree();
     }
@@ -1539,7 +1596,9 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
         const label: string = `${userName}`;
         const pullRequestStatus: string = isDraft ? 'Draft' : `${PullRequestStatus[status]}`;
+        const isAbandoned: boolean = status === PullRequestStatus.Abandoned;
         vscode.commands.executeCommand('setContext', 'isDraftPullRequest', isDraft);
+        vscode.commands.executeCommand('setContext', 'isAbandonedPullRequest', isAbandoned);
         const userId: string = this.pullRequest?.createdBy?.id as string;
 
         // User
