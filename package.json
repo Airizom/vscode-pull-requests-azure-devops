@@ -173,7 +173,7 @@
                 "category": "setFeedback"
             },
             {
-                "command": "pullRequestReviewPanel.setStatus",
+                "command": "pullRequestReviewPanel.setPullRequestStatus",
                 "title": "Set Status",
                 "icon": "$(chevron-down)"
             }
@@ -274,29 +274,29 @@
                     "when": "view == pullRequestReviewPanel && viewItem == removeWorkItem"
                 },
                 {
-                    "command": "pullRequestReviewPanel.setStatus",
+                    "command": "pullRequestReviewPanel.setPullRequestStatus",
                     "group": "inline",
                     "when": "view == pullRequestReviewPanel && viewItem == createdBy"
                 }
             ],
             "view/title": [{
                     "command": "pullRequestReviewPanel.approve",
-                    "when": "view == pullRequestReviewPanel",
+                    "when": "view == pullRequestReviewPanel && !isDraftPullRequest",
                     "group": "setFeedback"
                 },
                 {
                     "command": "pullRequestReviewPanel.approveWithSuggestions",
-                    "when": "view == pullRequestReviewPanel",
+                    "when": "view == pullRequestReviewPanel && !isDraftPullRequest",
                     "group": "setFeedback"
                 },
                 {
                     "command": "pullRequestReviewPanel.waitForAuthor",
-                    "when": "view == pullRequestReviewPanel",
+                    "when": "view == pullRequestReviewPanel && !isDraftPullRequest",
                     "group": "setFeedback"
                 },
                 {
                     "command": "pullRequestReviewPanel.reject",
-                    "when": "view == pullRequestReviewPanel",
+                    "when": "view == pullRequestReviewPanel && !isDraftPullRequest",
                     "group": "setFeedback"
                 },
                 {

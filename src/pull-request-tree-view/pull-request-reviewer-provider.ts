@@ -55,6 +55,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private addWorkItemCommand: vscode.Disposable | undefined;
     private removeWorkItemCommand: vscode.Disposable | undefined;
     private searchWorkItemCommand: vscode.Disposable | undefined;
+    private setPullRequestStatusCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -436,6 +437,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerAddWorkItemCommand();
         this.registerRemoveWorkItemCommand();
         this.registerSearchWorkItemCommand();
+        this.registerSetPullRequestStatusCommand();
+    }
+
+    public registerSetPullRequestStatusCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setPullRequestStatus');
+            if (!command && !this.setPullRequestStatusCommand) {
+                this.setPullRequestStatusCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setPullRequestStatus', this.onSetPullRequestStatus);
+            }
+        });
     }
 
     public registerSearchWorkItemCommand(): void {
@@ -576,6 +588,15 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private static openLinkInBrowser(url: string): Thenable<{} | undefined> {
         return vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
+
+    private readonly onSetPullRequestStatus = async (): Promise<void> => {
+        if (!this.pullRequest?.pullRequestId) {
+            return;
+        }
+        await this.pullRequestsService.setPullRequestStatus(this.pullRequest.pullRequestId, PullRequestStatus.Active);
+        this.refreshPullRequestTree();
+    }
+
 
     private readonly onRemoveReviewer = async (...args: any[]) => {
         if (this.pullRequest.pullRequestId) {
@@ -1242,7 +1263,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (!command && !this.completeCodeReviewCommand) {
                 this.completeCodeReviewCommand = vscode.commands.registerCommand('pullRequestReviewPanel.waitForAuthor', async () => {
                     if (this.pullRequest.pullRequestId) {
-                        await this.pullRequestsService.setPullRequestStatus(PullRequestVote.WaitingForAuthor, this.pullRequest.pullRequestId);
+                        await this.pullRequestsService.setPullRequestVote(PullRequestVote.WaitingForAuthor, this.pullRequest.pullRequestId);
                         vscode.commands.executeCommand('workbench.view.scm');
                     }
                 });
@@ -1261,7 +1282,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (!command && !this.approveCommand) {
                 this.approveCommand = vscode.commands.registerCommand('pullRequestReviewPanel.approve', async () => {
                     if (this.pullRequest.pullRequestId) {
-                        await this.pullRequestsService.setPullRequestStatus(PullRequestVote.Approved, this.pullRequest.pullRequestId);
+                        await this.pullRequestsService.setPullRequestVote(PullRequestVote.Approved, this.pullRequest.pullRequestId);
                         vscode.commands.executeCommand('workbench.view.scm');
                     }
                 });
@@ -1281,7 +1302,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (!command && !this.approveWithSuggestionsCommand) {
                 this.approveWithSuggestionsCommand = vscode.commands.registerCommand('pullRequestReviewPanel.approveWithSuggestions', async () => {
                     if (this.pullRequest.pullRequestId) {
-                        await this.pullRequestsService.setPullRequestStatus(PullRequestVote.ApprovedWithSuggestions, this.pullRequest.pullRequestId);
+                        await this.pullRequestsService.setPullRequestVote(PullRequestVote.ApprovedWithSuggestions, this.pullRequest.pullRequestId);
                         vscode.commands.executeCommand('workbench.view.scm');
                     }
                 });
@@ -1301,7 +1322,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (!command && !this.rejectCommand) {
                 this.rejectCommand = vscode.commands.registerCommand('pullRequestReviewPanel.reject', async () => {
                     if (this.pullRequest.pullRequestId) {
-                        await this.pullRequestsService.setPullRequestStatus(PullRequestVote.Rejected, this.pullRequest.pullRequestId);
+                        await this.pullRequestsService.setPullRequestVote(PullRequestVote.Rejected, this.pullRequest.pullRequestId);
                         vscode.commands.executeCommand('workbench.view.scm');
                     }
                 });
@@ -1518,6 +1539,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
         const label: string = `${userName}`;
         const pullRequestStatus: string = isDraft ? 'Draft' : `${PullRequestStatus[status]}`;
+        vscode.commands.executeCommand('setContext', 'isDraftPullRequest', isDraft);
         const userId: string = this.pullRequest?.createdBy?.id as string;
 
         // User
