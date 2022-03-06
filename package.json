@@ -173,9 +173,24 @@
                 "category": "setFeedback"
             },
             {
-                "command": "pullRequestReviewPanel.setPullRequestStatus",
-                "title": "Set Status",
-                "icon": "$(chevron-down)"
+                "command": "pullRequestReviewPanel.setStatusComplete",
+                "title": "Complete",
+                "icon": "$(check)"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusDraft",
+                "title": "Mark as Draft",
+                "icon": "$(edit)"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusAbandoned",
+                "title": "Abandon",
+                "icon": "$(x)"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusPublished",
+                "title": "Publish",
+                "icon": "$(arrow-up)"
             }
         ],
         "views": {
@@ -274,9 +289,24 @@
                     "when": "view == pullRequestReviewPanel && viewItem == removeWorkItem"
                 },
                 {
-                    "command": "pullRequestReviewPanel.setPullRequestStatus",
-                    "group": "inline",
-                    "when": "view == pullRequestReviewPanel && viewItem == createdBy"
+                    "command": "pullRequestReviewPanel.setStatusComplete",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest",
+                    "group": "inline"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusDraft",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest",
+                    "group": "inline"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusAbandoned",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy",
+                    "group": "inline"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusPublished",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && isDraftPullRequest",
+                    "group": "inline"
                 }
             ],
             "view/title": [{
