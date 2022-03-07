@@ -55,6 +55,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private addWorkItemCommand: vscode.Disposable | undefined;
     private removeWorkItemCommand: vscode.Disposable | undefined;
     private searchWorkItemCommand: vscode.Disposable | undefined;
+    private abandonPullRequestCommand: vscode.Disposable | undefined;
+    private reactivatePullRequestCommand: vscode.Disposable | undefined;
+    private markAsDraftPullRequestCommand: vscode.Disposable | undefined;
+    private publishPullRequestCommand: vscode.Disposable | undefined;
+    private completePullRequestCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -436,6 +441,61 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerAddWorkItemCommand();
         this.registerRemoveWorkItemCommand();
         this.registerSearchWorkItemCommand();
+        this.registerAbandonPullRequestCommand();
+        this.registerReactivatePullRequestCommand();
+        this.registerMarkAsDraftPullRequestCommand();
+        this.registerPublishPullRequestCommand();
+        this.registerCompletePullRequestCommand();
+    }
+
+    public registerCompletePullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusComplete');
+            if (!command && !this.completePullRequestCommand) {
+                this.completePullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusComplete', this.onCompletePullRequest);
+            }
+        });
+    }
+
+    public registerAbandonPullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusAbandoned');
+            if (!command && !this.abandonPullRequestCommand) {
+                this.abandonPullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusAbandoned', this.onAbandonPullRequest);
+            }
+        });
+    }
+
+    public registerReactivatePullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusReactivated');
+            if (!command && !this.reactivatePullRequestCommand) {
+                this.reactivatePullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusReactivated', this.onReactivatePullRequest);
+            }
+        });
+    }
+
+    public registerMarkAsDraftPullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusDraft');
+            if (!command && !this.markAsDraftPullRequestCommand) {
+                this.markAsDraftPullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusDraft', this.onMarkAsDraftPullRequest);
+            }
+        });
+    }
+
+    public registerPublishPullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusPublished');
+            if (!command && !this.publishPullRequestCommand) {
+                this.publishPullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusPublished', this.onPublishPullRequest);
+            }
+        });
     }
 
     public registerSearchWorkItemCommand(): void {
@@ -577,9 +637,55 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         return vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 
+    private readonly onCompletePullRequest = async (): Promise<void> => {
+        if (!this.pullRequest?.pullRequestId) {
+            return;
+        }
+        const lastCommitId: string | undefined = this.pullRequest.commits?.[0].commitId;
+        if (!lastCommitId) {
+            return;
+        }
+        await this.pullRequestsService.setPullRequestStatus(
+            this.pullRequest.pullRequestId,
+            PullRequestStatus.Completed,
+            lastCommitId
+        );
+        this.refreshPullRequestTree();
+    }
+
+    private readonly onAbandonPullRequest = async (): Promise<void> => {
+        if (!this.pullRequest?.pullRequestId) {
+            return;
+        }
+        await this.pullRequestsService.setPullRequestStatus(this.pullRequest.pullRequestId, PullRequestStatus.Abandoned);
+        this.refreshPullRequestTree();
+    }
+
+    private readonly onReactivatePullRequest = async (): Promise<void> => {
+        if (!this.pullRequest?.pullRequestId) {
+            return;
+        }
+        await this.pullRequestsService.setPullRequestStatus(this.pullRequest.pullRequestId, PullRequestStatus.Active);
+        this.refreshPullRequestTree();
+    }
+
     private readonly onRemoveReviewer = async (...args: any[]) => {
         if (this.pullRequest.pullRequestId) {
             await this.pullRequestsService.removeReviewer(this.pullRequest.pullRequestId, args[0].id);
+        }
+        this.refreshPullRequestTree();
+    }
+
+    private readonly onMarkAsDraftPullRequest = async (...args: any[]) => {
+        if (this.pullRequest.pullRequestId) {
+            await this.pullRequestsService.markAsDraft(this.pullRequest.pullRequestId, true);
+        }
+        this.refreshPullRequestTree();
+    }
+
+    private readonly onPublishPullRequest = async (...args: any[]) => {
+        if (this.pullRequest.pullRequestId) {
+            await this.pullRequestsService.markAsDraft(this.pullRequest.pullRequestId, false);
         }
         this.refreshPullRequestTree();
     }
@@ -1242,7 +1348,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (!command && !this.completeCodeReviewCommand) {
                 this.completeCodeReviewCommand = vscode.commands.registerCommand('pullRequestReviewPanel.waitForAuthor', async () => {
                     if (this.pullRequest.pullRequestId) {
-                        await this.pullRequestsService.setPullRequestStatus(PullRequestVote.WaitingForAuthor, this.pullRequest.pullRequestId);
+                        await this.pullRequestsService.setPullRequestVote(PullRequestVote.WaitingForAuthor, this.pullRequest.pullRequestId);
                         vscode.commands.executeCommand('workbench.view.scm');
                     }
                 });
@@ -1261,7 +1367,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (!command && !this.approveCommand) {
                 this.approveCommand = vscode.commands.registerCommand('pullRequestReviewPanel.approve', async () => {
                     if (this.pullRequest.pullRequestId) {
-                        await this.pullRequestsService.setPullRequestStatus(PullRequestVote.Approved, this.pullRequest.pullRequestId);
+                        await this.pullRequestsService.setPullRequestVote(PullRequestVote.Approved, this.pullRequest.pullRequestId);
                         vscode.commands.executeCommand('workbench.view.scm');
                     }
                 });
@@ -1281,7 +1387,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (!command && !this.approveWithSuggestionsCommand) {
                 this.approveWithSuggestionsCommand = vscode.commands.registerCommand('pullRequestReviewPanel.approveWithSuggestions', async () => {
                     if (this.pullRequest.pullRequestId) {
-                        await this.pullRequestsService.setPullRequestStatus(PullRequestVote.ApprovedWithSuggestions, this.pullRequest.pullRequestId);
+                        await this.pullRequestsService.setPullRequestVote(PullRequestVote.ApprovedWithSuggestions, this.pullRequest.pullRequestId);
                         vscode.commands.executeCommand('workbench.view.scm');
                     }
                 });
@@ -1301,7 +1407,7 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
             if (!command && !this.rejectCommand) {
                 this.rejectCommand = vscode.commands.registerCommand('pullRequestReviewPanel.reject', async () => {
                     if (this.pullRequest.pullRequestId) {
-                        await this.pullRequestsService.setPullRequestStatus(PullRequestVote.Rejected, this.pullRequest.pullRequestId);
+                        await this.pullRequestsService.setPullRequestVote(PullRequestVote.Rejected, this.pullRequest.pullRequestId);
                         vscode.commands.executeCommand('workbench.view.scm');
                     }
                 });
@@ -1518,6 +1624,11 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
         const label: string = `${userName}`;
         const pullRequestStatus: string = isDraft ? 'Draft' : `${PullRequestStatus[status]}`;
+        const isAbandoned: boolean = status === PullRequestStatus.Abandoned;
+        const isCompleted: boolean = status === PullRequestStatus.Completed;
+        vscode.commands.executeCommand('setContext', 'isDraftPullRequest', isDraft);
+        vscode.commands.executeCommand('setContext', 'isAbandonedPullRequest', isAbandoned);
+        vscode.commands.executeCommand('setContext', 'isCompletedPullRequest', isCompleted);
         const userId: string = this.pullRequest?.createdBy?.id as string;
 
         // User

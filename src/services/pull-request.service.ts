@@ -258,6 +258,44 @@ export class PullRequestsService extends AzureDevopsService {
         return undefined;
     }
 
+    public async setPullRequestStatus(pullRequestId: number, status: PullRequestStatus, commitId?: string): Promise<void> {
+        if (this.connection && this.repository && this.repository.id) {
+            const requestUrl: string = `${this.connection.serverUrl}/${this.repository.project?.id}/_apis/git/repositories/${this.repository.id}/pullRequests/${pullRequestId}/?api-version=5.0-preview.1`;
+            const body: any = {
+                status
+            };
+            if (status === PullRequestStatus.Completed) {
+                body['LastMergeSourceCommit'] = {
+                    commitId
+                };
+            }
+            const response: IHttpClientResponse = await this.connection.rest.client.patch(
+                requestUrl,
+                JSON.stringify(body),
+                { 'Content-Type': 'application/json' }
+            );
+            const statusCodeOk: number = 200;
+            if (response.message && response.message.statusCode === statusCodeOk) {
+                const body: string = await response.readBody();
+                return JSON.parse(body);
+            }
+        }
+        throw new Error('Unable to set pull request status');
+    }
+
+    public async markAsDraft(pullRequestId: number, isDraft: boolean): Promise<void> {
+        if (this.connection && this.repository && this.repository.id) {
+            const requestUrl: string = `${this.connection.serverUrl}/${this.repository.project?.id}/_apis/git/repositories/${this.repository.id}/pullRequests/${pullRequestId}/?api-version=5.0-preview.1`;
+            const response: IHttpClientResponse = await this.connection.rest.client.patch(requestUrl, JSON.stringify({ isDraft }), { 'Content-Type': 'application/json' });
+            const statusCodeOk: number = 200;
+            if (response.message && response.message.statusCode === statusCodeOk) {
+                const body: string = await response.readBody();
+                return JSON.parse(body);
+            }
+        }
+        throw new Error('Unable to set pull request status');
+    }
+
     /**
      * Get the statuses of a pull request
      *
@@ -663,7 +701,7 @@ export class PullRequestsService extends AzureDevopsService {
      * @param pullRequestId
      * @memberof PullRequestsService
      */
-    public async setPullRequestStatus(vote: PullRequestVote, pullRequestId: number): Promise<void> {
+    public async setPullRequestVote(vote: PullRequestVote, pullRequestId: number): Promise<void> {
         if (this.connection && this.repository) {
             const requestUrl: string = `${this.connection.serverUrl}/_apis/git/repositories/${this.repository.id}/pullRequests/${pullRequestId}/reviewers/${this.user.identity.TeamFoundationId}/?api-version=5.1`;
             await this.connection.rest.client.put(requestUrl, JSON.stringify({ vote }), { 'Content-Type': 'application/json' });

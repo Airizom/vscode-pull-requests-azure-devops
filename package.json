@@ -8,7 +8,7 @@
         "url": "https://github.com/Airizom/vscode-pull-requests-azure-devops.git"
     },
     "icon": "pull-request-icon.png",
-    "version": "0.0.26",
+    "version": "0.0.27",
     "engines": {
         "vscode": "^1.64.0"
     },
@@ -171,6 +171,31 @@
                 "command": "pullRequestReviewPanel.reject",
                 "title": "Reject",
                 "category": "setFeedback"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusComplete",
+                "title": "Complete",
+                "icon": "$(check)"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusDraft",
+                "title": "Mark as Draft",
+                "icon": "$(edit)"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusAbandoned",
+                "title": "Abandon",
+                "icon": "$(x)"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusPublished",
+                "title": "Publish",
+                "icon": "$(arrow-up)"
+            },
+            {
+                "command": "pullRequestReviewPanel.setStatusReactivated",
+                "title": "Reactivate",
+                "icon": "$(refresh)"
             }
         ],
         "views": {
@@ -267,26 +292,51 @@
                     "command": "pullRequestReviewPanel.removeWorkItem",
                     "group": "inline",
                     "when": "view == pullRequestReviewPanel && viewItem == removeWorkItem"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusComplete",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest && !isAbandonedPullRequest && !isCompletedPullRequest",
+                    "group": "inline"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusDraft",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest && !isAbandonedPullRequest  && !isCompletedPullRequest",
+                    "group": "inline"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusAbandoned",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isAbandonedPullRequest && !isCompletedPullRequest",
+                    "group": "inline"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusPublished",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && isDraftPullRequest && !isAbandonedPullRequest",
+                    "group": "inline"
+                },
+                {
+                    "command": "pullRequestReviewPanel.setStatusReactivated",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && isAbandonedPullRequest",
+                    "group": "inline"
                 }
             ],
             "view/title": [{
                     "command": "pullRequestReviewPanel.approve",
-                    "when": "view == pullRequestReviewPanel",
+                    "when": "view == pullRequestReviewPanel && !isDraftPullRequest",
                     "group": "setFeedback"
                 },
                 {
                     "command": "pullRequestReviewPanel.approveWithSuggestions",
-                    "when": "view == pullRequestReviewPanel",
+                    "when": "view == pullRequestReviewPanel && !isDraftPullRequest",
                     "group": "setFeedback"
                 },
                 {
                     "command": "pullRequestReviewPanel.waitForAuthor",
-                    "when": "view == pullRequestReviewPanel",
+                    "when": "view == pullRequestReviewPanel && !isDraftPullRequest",
                     "group": "setFeedback"
                 },
                 {
                     "command": "pullRequestReviewPanel.reject",
-                    "when": "view == pullRequestReviewPanel",
+                    "when": "view == pullRequestReviewPanel && !isDraftPullRequest",
                     "group": "setFeedback"
                 },
                 {
