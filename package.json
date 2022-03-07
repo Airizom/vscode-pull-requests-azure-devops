@@ -295,17 +295,17 @@
                 },
                 {
                     "command": "pullRequestReviewPanel.setStatusComplete",
-                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest && !isAbandonedPullRequest",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest && !isAbandonedPullRequest && !isCompletedPullRequest",
                     "group": "inline"
                 },
                 {
                     "command": "pullRequestReviewPanel.setStatusDraft",
-                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest && !isAbandonedPullRequest",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isDraftPullRequest && !isAbandonedPullRequest  && !isCompletedPullRequest",
                     "group": "inline"
                 },
                 {
                     "command": "pullRequestReviewPanel.setStatusAbandoned",
-                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isAbandonedPullRequest",
+                    "when": "view == pullRequestReviewPanel && viewItem == createdBy && !isAbandonedPullRequest && !isCompletedPullRequest",
                     "group": "inline"
                 },
                 {

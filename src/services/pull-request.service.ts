@@ -258,10 +258,22 @@ export class PullRequestsService extends AzureDevopsService {
         return undefined;
     }
 
-    public async setPullRequestStatus(pullRequestId: number, status: number): Promise<void> {
+    public async setPullRequestStatus(pullRequestId: number, status: PullRequestStatus, commitId?: string): Promise<void> {
         if (this.connection && this.repository && this.repository.id) {
             const requestUrl: string = `${this.connection.serverUrl}/${this.repository.project?.id}/_apis/git/repositories/${this.repository.id}/pullRequests/${pullRequestId}/?api-version=5.0-preview.1`;
-            const response: IHttpClientResponse = await this.connection.rest.client.patch(requestUrl, JSON.stringify({ status }), { 'Content-Type': 'application/json' });
+            const body: any = {
+                status
+            };
+            if (status === PullRequestStatus.Completed) {
+                body['LastMergeSourceCommit'] = {
+                    commitId
+                };
+            }
+            const response: IHttpClientResponse = await this.connection.rest.client.patch(
+                requestUrl,
+                JSON.stringify(body),
+                { 'Content-Type': 'application/json' }
+            );
             const statusCodeOk: number = 200;
             if (response.message && response.message.statusCode === statusCodeOk) {
                 const body: string = await response.readBody();

@@ -30,9 +30,6 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
 
     public changesetVersionDiffEditor: vscode.TextEditor | undefined;
     public previousVersionDiffEditor: vscode.TextEditor | undefined;
-    reactivatePullRequestCommand: any;
-    markAsDraftPullRequestCommand: any;
-    publishPullRequestCommand: any;
 
     private completeCodeReviewCommand: vscode.Disposable | undefined;
     private approveCommand: vscode.Disposable | undefined;
@@ -59,6 +56,10 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
     private removeWorkItemCommand: vscode.Disposable | undefined;
     private searchWorkItemCommand: vscode.Disposable | undefined;
     private abandonPullRequestCommand: vscode.Disposable | undefined;
+    private reactivatePullRequestCommand: vscode.Disposable | undefined;
+    private markAsDraftPullRequestCommand: vscode.Disposable | undefined;
+    private publishPullRequestCommand: vscode.Disposable | undefined;
+    private completePullRequestCommand: vscode.Disposable | undefined;
 
     private readonly diffCommentService: DiffCommentService;
     private readonly avatarUtility: AvatarUtility;
@@ -444,6 +445,17 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         this.registerReactivatePullRequestCommand();
         this.registerMarkAsDraftPullRequestCommand();
         this.registerPublishPullRequestCommand();
+        this.registerCompletePullRequestCommand();
+    }
+
+    public registerCompletePullRequestCommand(): void {
+        vscode.commands.getCommands(true).then((value: string[]) => {
+            const command: string | undefined = value.find(s => s === 'pullRequestReviewPanel.setStatusComplete');
+            if (!command && !this.completePullRequestCommand) {
+                this.completePullRequestCommand =
+                    vscode.commands.registerCommand('pullRequestReviewPanel.setStatusComplete', this.onCompletePullRequest);
+            }
+        });
     }
 
     public registerAbandonPullRequestCommand(): void {
@@ -623,6 +635,22 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
      */
     private static openLinkInBrowser(url: string): Thenable<{} | undefined> {
         return vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
+    }
+
+    private readonly onCompletePullRequest = async (): Promise<void> => {
+        if (!this.pullRequest?.pullRequestId) {
+            return;
+        }
+        const lastCommitId: string | undefined = this.pullRequest.commits?.[0].commitId;
+        if (!lastCommitId) {
+            return;
+        }
+        await this.pullRequestsService.setPullRequestStatus(
+            this.pullRequest.pullRequestId,
+            PullRequestStatus.Completed,
+            lastCommitId
+        );
+        this.refreshPullRequestTree();
     }
 
     private readonly onAbandonPullRequest = async (): Promise<void> => {
@@ -1597,8 +1625,10 @@ export class PullRequestReviewerTreeProvider implements vscode.TreeDataProvider<
         const label: string = `${userName}`;
         const pullRequestStatus: string = isDraft ? 'Draft' : `${PullRequestStatus[status]}`;
         const isAbandoned: boolean = status === PullRequestStatus.Abandoned;
+        const isCompleted: boolean = status === PullRequestStatus.Completed;
         vscode.commands.executeCommand('setContext', 'isDraftPullRequest', isDraft);
         vscode.commands.executeCommand('setContext', 'isAbandonedPullRequest', isAbandoned);
+        vscode.commands.executeCommand('setContext', 'isCompletedPullRequest', isCompleted);
         const userId: string = this.pullRequest?.createdBy?.id as string;
 
         // User
